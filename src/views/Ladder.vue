@@ -66,7 +66,7 @@
           <v-btn @click="resetForm" color="grey darken-2">reset</v-btn>
         </v-col>
         <v-col align="left" sm="4">
-          <v-btn @click="Testje" color="#ba4967" width="125"
+          <v-btn @click="previewSell" color="#ba4967" width="125"
             >Preview Sell<BR /> Entries</v-btn
           >
         </v-col>
@@ -98,63 +98,79 @@
 
 <script>
 // @ is an alias to /src
-// import generateOrders from "@/components/scaledOrderGenerator.js";
-import Test from "@/components/test.js";
+import { generateOrders } from "@/components/scaledOrderGenerator.js";
 
 export default {
   name: "Ladder",
-  components: {
-  },
+  components: {},
   methods: {
     resetForm() {
       this.$refs.form.reset();
     },
     Testje() {
-      this.previewSell()
+      this.previewSell();
     },
     previewSell() {
-      this.orders = [];
-      var step = (this.higher_price - this.lower_price) / this.number_of_orders;
-      step += step / this.number_of_orders; // to include the lower boundary
-      this.quantity = parseFloat(this.quantity);
-      this.scale_coefficient = parseFloat(this.scale_coefficient);
-      this.quantity = parseFloat(this.quantity);
-      var i = parseFloat(this.lower_price);
-      var c = 0;
-      Test()
-      console.log(c)
-      while (i <= parseFloat(this.higher_price)) {
-        let rounded_price = Math.round((i + Number.EPSILON) * 100) / 100;
-        rounded_price = (Math.round(rounded_price * 2) / 2).toFixed(1);
-        this.orders.push({
-          side: "Sell",
-          quantity: 10,
-          price: rounded_price,
-          take_profit: this.take_profit,
-          stop_loss: this.stop_loss,
-          time_in_force: this.time_in_force,
+      if (this.$refs.form.validate()) {
+        this.orders = [];
+        this.quantity = parseFloat(this.quantity);
+        this.number_of_orders = parseFloat(this.number_of_orders);
+        this.lower_price = parseFloat(this.lower_price);
+        this.higher_price = parseFloat(this.higher_price);
+        this.scale_coefficient = parseFloat(this.scale_coefficient);
+        var orders = generateOrders({
+          amount: this.quantity,
+          orderCount: this.number_of_orders,
+          priceLower: this.lower_price,
+          priceUpper: this.higher_price,
+          distribution: this.scale,
+          tickSize: 0.5,
+          coefficient: this.scale_coefficient,
         });
-        i += step;
-        c++;
+        orders.forEach((order) => {
+          this.orders.push({
+            side: "Sell",
+            quantity: order["amount"],
+            price: order["price"],
+            take_profit: this.take_profit,
+            stop_loss: this.stop_loss,
+            time_in_force: this.time_in_force,
+          });
+        });
       }
     },
     previewBuy() {
-      var step = (this.higher_price - this.lower_price) / this.number_of_orders;
-      step += step / this.number_of_orders; // to include the lower boundary
-      console.log(step);
-      var i = parseFloat(this.higher_price);
-      while (i >= parseFloat(this.lower_price)) {
-        let rounded_price = Math.round((i + Number.EPSILON) * 100) / 100;
-        rounded_price = (Math.round(rounded_price * 2) / 2).toFixed(1);
-        this.desserts.push({
-          side: "Buy",
-          quantity: this.quantity / this.number_of_orders,
-          price: rounded_price,
-          take_profit: this.take_profit,
-          stop_loss: this.stop_loss,
-          time_in_force: this.time_in_force,
+      if (this.$refs.form.validate()) {
+        this.orders = [];
+        this.quantity = parseFloat(this.quantity);
+        this.number_of_orders = parseFloat(this.number_of_orders);
+        this.lower_price = parseFloat(this.lower_price);
+        this.higher_price = parseFloat(this.higher_price);
+        this.scale_coefficient = parseFloat(this.scale_coefficient);
+        var orders = generateOrders({
+          amount: this.quantity,
+          orderCount: this.number_of_orders,
+          priceLower: this.lower_price,
+          priceUpper: this.higher_price,
+          distribution:
+            this.scale === "Flat"
+              ? "Flat"
+              : this.scale === "Increasing"
+              ? "Decreasing"
+              : "Increasing",
+          tickSize: 0.5,
+          coefficient: this.scale_coefficient,
         });
-        i -= step;
+        orders.reverse().forEach((order) => {
+          this.orders.push({
+            side: "Buy",
+            quantity: order["amount"],
+            price: order["price"],
+            take_profit: this.take_profit,
+            stop_loss: this.stop_loss,
+            time_in_force: this.time_in_force,
+          });
+        });
       }
     },
   },
@@ -203,5 +219,4 @@ export default {
     },
   }),
 };
-
 </script>

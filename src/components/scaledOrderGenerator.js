@@ -1,8 +1,10 @@
-// Blatently copied from bybit-tools https://github.com/TranceGeniK/bybit-tools
+// Inspired by bitfinex. please don't sue me
+
+// Thanks to https://github.com/nice-table for the algo :)
 
 import _ from 'lodash';
 import {ORDER_DISTRIBUTIONS} from './constants';
-import {Decimal} from 'decimal.js';
+import {Decimal} from "decimal.js";
 
 // Get distribution weights
 const getAmountDistribution = (distribution, orderCount, coefficient) => {
@@ -67,7 +69,15 @@ const distributeAmount = (total, weights) => {
   return distributedTotal;
 };
 
-const generateOrders = () => {
+const generateOrders = ({
+                          amount,
+                          orderCount,
+                          priceLower,
+                          priceUpper,
+                          distribution,
+                          tickSize,
+                          coefficient
+                        }) => {
   if (amount < 2) {
     return new Error('Amount must be greater than or equal to 2');
   }
