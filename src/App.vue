@@ -24,6 +24,19 @@
     <v-app-bar app clipped-left>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Hedgehog</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn-toggle mandatory color="primary"> 
+        <v-btn @click="sendAssetChangeMsg('BTC-PERPETUAL')" small>
+          BTC/USD
+        </v-btn>
+        <v-btn @click="sendAssetChangeMsg('ETH-PERPETUAL')" small>
+          ETH/USD
+        </v-btn>
+      </v-btn-toggle>
+      <v-spacer></v-spacer>
+      <span class="error--text">last</span>
+      &nbsp;|&nbsp;
+      <span class="success--text">mark</span>
     </v-app-bar>
 
     <v-main>
@@ -39,7 +52,7 @@
 </template>
 
 <script>
-import Ladder from "./views/Ladder"
+import Ladder from "./views/Ladder";
 export default {
   props: {
     source: String,
@@ -47,12 +60,23 @@ export default {
   components: {
     Ladder,
   },
+  methods: {
+      sendAssetChangeMsg(asset) {
+        this.$root.$emit('asset_change', asset)
+      }
+  },
   data: () => ({
     drawer: null,
   }),
   created() {
     this.$vuetify.theme.dark = true;
+    this.$vuetify.theme.themes.dark.primary = "#eba51d";
+    this.$vuetify.theme.themes.dark.success = "#78b63f";
+    this.$vuetify.theme.themes.dark.error = "#e44b8f";
   },
+  mounted() {
+    this.sendAssetChangeMsg('asset_change', 'BTC-PERPETUAL')
+  }
 };
 </script>
 
