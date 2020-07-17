@@ -6,9 +6,12 @@ import vuetify from "./plugins/vuetify";
 
 Vue.config.productionTip = false;
 
+import deribitApi from "./plugins/deribitApi";
+Vue.use(deribitApi);
+
 new Vue({
   router,
   store,
   vuetify,
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount("#app");

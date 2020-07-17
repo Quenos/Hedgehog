@@ -26,10 +26,10 @@
       <v-toolbar-title>Hedgehog</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn-toggle mandatory color="primary"> 
-        <v-btn @click="sendAssetChangeMsg('BTC-PERPETUAL')" small>
+        <v-btn @click="setAsset('BTC-PERPETUAL')" small>
           BTC/USD
         </v-btn>
-        <v-btn @click="sendAssetChangeMsg('ETH-PERPETUAL')" small>
+        <v-btn @click="setAsset('ETH-PERPETUAL')" small>
           ETH/USD
         </v-btn>
       </v-btn-toggle>
@@ -53,6 +53,8 @@
 
 <script>
 import Ladder from "./views/Ladder";
+import { mapMutations } from 'vuex'
+
 export default {
   props: {
     source: String,
@@ -63,7 +65,8 @@ export default {
   methods: {
       sendAssetChangeMsg(asset) {
         this.$root.$emit('asset_change', asset)
-      }
+      },
+      ...mapMutations(['setAsset'])
   },
   data: () => ({
     drawer: null,

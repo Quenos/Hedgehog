@@ -163,36 +163,34 @@
 
 <script>
 // @ is an alias to /src
+import { mapGetters } from 'vuex'
+
 import { generateOrders } from "@/components/scaledOrderGenerator.js";
-import {
-  enterOrders,
-  cancelOrder,
-  cancelAllOrders,
-  getOpenOrders,
-} from "../api/Deribit";
+
 
 export default {
   name: "Ladder",
   components: {},
   methods: {
     async cancelAllOrderItems() {
-      await cancelAllOrders();
+      await this.$deribitApi.cancelAllOrders();
       this.openOrders();
     },
     async cancelOrders(direction) {
       this.openOrderItems.forEach(async (openOrder) => {
         if (openOrder["orderSide"] === direction) {
-          await cancelOrder(openOrder["orderId"]);
+          await this.$deribitApi.cancelOrder(openOrder["orderId"]);
         }
       });
       this.openOrders();
     },
     async cancelOrderId(item) {
-      await cancelOrder(item["orderId"]);
+      await this.$deribitApi.cancelOrder(item["orderId"]);
       this.openOrders();
     },
     async openOrders() {
-      var resp = await getOpenOrders(this.asset.substring(0,3));
+      var resp = await this.$deribitApi.getOpenOrders(this.getAsset.substring(0,3));
+      // console.log(resp)
       if (resp["result"].length === 0) {
         this.showOpenOrders = false;
         this.openOrderItems = [];
@@ -243,8 +241,8 @@ export default {
     },
     async submit_orders() {
       this.showPreview = !this.showPreview;
-      await enterOrders(
-        this.asset,
+      await this.$deribitApi.enterOrders(
+        this.getAsset,
         "limit",
         this.post_only,
         this.reduce_only,
@@ -320,7 +318,6 @@ export default {
   },
   data: () => ({
     deribitExchange: true,
-    asset: 'BTC-PERPETUAL',
     valid: true,
     showPreview: false,
     showOpenOrders: false,
@@ -380,12 +377,12 @@ export default {
       },
     },
   }),
+  computed: {
+    ...mapGetters(['getAsset']),
+  },
   mounted: function() {
     this.openOrders();
     // setInterval(() => this.openOrders(), 15 * 1000);
-    this.$root.$on ("asset_change", (asset) => {
-      this.asset = asset;
-    });
   },
 };
 </script>
