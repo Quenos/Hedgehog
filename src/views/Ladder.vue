@@ -164,7 +164,7 @@
 <script>
 // @ is an alias to /src
 import { mapGetters } from 'vuex'
-
+import store from "../store";
 import { generateOrders } from "@/components/scaledOrderGenerator.js";
 
 
@@ -189,16 +189,14 @@ export default {
       this.openOrders();
     },
     async openOrders() {
-      var resp = await this.$deribitApi.getOpenOrders(this.getAsset.substring(0,3));
-      // console.log(resp)
-      if (resp["result"].length === 0) {
+      if (this.theOpenOrders.length === 0) {
         this.showOpenOrders = false;
         this.openOrderItems = [];
       } else {
         var longs = 0;
         var shorts = 0;
         this.openOrderItems = [];
-        resp["result"].forEach((openOrder) => {
+        this.theOpenOrders.forEach((openOrder) => {
           const dateObject = new Date(openOrder["last_update_timestamp"]);
           var price;
           if (openOrder["price"] === "market_price") {
@@ -379,10 +377,18 @@ export default {
   }),
   computed: {
     ...mapGetters(['getAsset']),
+    theOpenOrders() {
+      return store.getters.getOpenOrdersByExchange('deribit')
+    }
+
   },
   mounted: function() {
-    this.openOrders();
     // setInterval(() => this.openOrders(), 15 * 1000);
   },
+  watch: {
+    theOpenOrders () {
+      this.openOrders()
+    }
+  }
 };
 </script>

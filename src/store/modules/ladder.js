@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 const state = {
     exchange: 'deribit'
 }
