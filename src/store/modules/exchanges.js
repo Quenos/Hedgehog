@@ -3,35 +3,44 @@ const state = {
     deribit: [
       {
         apiKey: "-D5YHdyP",
-        apiSecret: "abdFm3PY38AvLGtukEk8BZfvx2zxQGOWn8v6R7cL4e4",
-      },
-    ],
+        apiSecret: "abdFm3PY38AvLGtukEk8BZfvx2zxQGOWn8v6R7cL4e4"
+      }
+    ]
   },
   urls: {
     deribit: {
       rest: `https://www.deribit.com/api/v2/`,
-      ws: `wss://www.deribit.com/ws/api/v2`,
-    },
+      ws: `wss://www.deribit.com/ws/api/v2`
+    }
   },
   openOrders: {
-    deribit: [],
+    deribit: []
   },
+  lastAndMarkPrices: {
+    deribit: {
+      markPrice: 0,
+      lastPrice: 0
+    }
+  }
 };
 
 const getters = {
   getApiKeys: () => state.apiKeys,
-  getApiKeysByExchange: (state) => (exchange) => {
+  getApiKeysByExchange: state => exchange => {
     return state.apiKeys[exchange];
   },
-  getRestUrlByExchange: (state) => (exchange) => {
+  getRestUrlByExchange: state => exchange => {
     return state.apiKeys[exchange]["rest"];
   },
-  getWsUrlByExchange: (state) => (exchange) => {
+  getWsUrlByExchange: state => exchange => {
     return state.urls[exchange]["ws"];
   },
-  getOpenOrdersByExchange: (state) => (exchange) => {
+  getOpenOrdersByExchange: state => exchange => {
     return state.openOrders[exchange];
   },
+  getLastAndMarkPriceByExchange: state => exchange => {
+    return state.lastAndMarkPrices[exchange];
+  }
 };
 
 const actions = {};
@@ -39,9 +48,9 @@ const actions = {};
 const mutations = {
   // setApiKeys: (state, exchange, keys) => TODO,
   setOpenOrders(state, data) {
-    data.openOrders.forEach((openOrder) => {
+    data.openOrders.forEach(openOrder => {
       state.openOrders["deribit"] = state.openOrders[data.exchange].filter(
-        (value) => {
+        value => {
           return value.order_id !== openOrder.order_id;
         }
       );
@@ -49,15 +58,21 @@ const mutations = {
         openOrder.order_state === "open" ||
         openOrder.order_state === "untriggered"
       ) {
-        state.openOrders["deribit"].push(openOrder);
+        state.openOrders[data.exchange].push(openOrder);
       }
     });
   },
+  setLastAndMarkPrice(state, data) {
+    state.lastAndMarkPrices[data.exchange] = {
+      lastPrice: data.lastPrice,
+      markPrice: data.markPrice
+    };
+  }
 };
 
 export default {
   state,
   getters,
   actions,
-  mutations,
+  mutations
 };

@@ -1,21 +1,23 @@
 const state = {
-    asset: 'BTC-PERPETUAL'
-}
+  asset: "BTC-PERPETUAL",
+  exchange: "deribit"
+};
 
 const getters = {
-    getAsset: () => state.asset
-}
+  getAsset: () => state.asset,
+  getExchange: () => state.exchange
+};
 
-const actions = {
-}
+const actions = {};
 
 const mutations = {
-    setAsset: (state, asset) => (state.asset = asset)
-}
+  setAsset: (state, asset) => (state.asset = asset),
+  setExchange: (state, exchange) => (state.exchange = exchange)
+};
 
 export default {
-    state,
-    getters,
-    actions,
-    mutations
-}
+  state,
+  getters,
+  actions,
+  mutations
+};

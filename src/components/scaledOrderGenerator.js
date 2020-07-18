@@ -44,7 +44,7 @@ const distributeAmount = (total, weights, isDeribit) => {
   const distributedTotal = [];
   const distributionSum = _.sum(weights);
 
-  weights.forEach((weight) => {
+  weights.forEach(weight => {
     const val = (weight * total) / distributionSum + leftover;
 
     var weightedValue = 0;
@@ -83,7 +83,7 @@ const generateOrders = ({
   priceUpper,
   distribution,
   tickSize,
-  coefficient,
+  coefficient
 }) => {
   if (amount < 2) {
     return new Error("Amount must be greater than or equal to 2");
@@ -101,7 +101,7 @@ const generateOrders = ({
 
   // Generate the prices we're placing orders at
   const orderPrices = _.range(orderCount)
-    .map((i) => {
+    .map(i => {
       // Lower price
       if (i === 0) {
         return priceLower;
@@ -114,7 +114,7 @@ const generateOrders = ({
 
       return priceLower + stepsPerPricePoint * i;
     })
-    .map((price) => roundToTickSize(tickSize, price));
+    .map(price => roundToTickSize(tickSize, price));
 
   let minPrice = Infinity;
   let maxPrice = -Infinity;
@@ -125,13 +125,13 @@ const generateOrders = ({
 
     return acc.concat({
       price: curr,
-      amount: _.floor(orderSizes[index], 0),
+      amount: _.floor(orderSizes[index], 0)
     });
   }, []);
 
   // Verify that the generated orders match the specification so that we don't end up poor
 
-  if (Math.abs(_.sumBy(orders, (order) => order.amount)) > Math.abs(amount)) {
+  if (Math.abs(_.sumBy(orders, order => order.amount)) > Math.abs(amount)) {
     return new Error(`The orders total up to an amount larger than ${amount}`);
   }
 

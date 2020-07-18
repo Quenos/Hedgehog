@@ -1,5 +1,4 @@
-
 const Test = () => {
-  return 'Test'
-}
-export {Test};
+  return "Test";
+};
+export { Test };

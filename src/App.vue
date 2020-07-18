@@ -25,7 +25,7 @@
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Hedgehog</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn-toggle mandatory color="primary"> 
+      <v-btn-toggle mandatory color="primary">
         <v-btn @click="setAsset('BTC-PERPETUAL')" small>
           BTC/USD
         </v-btn>
@@ -34,9 +34,28 @@
         </v-btn>
       </v-btn-toggle>
       <v-spacer></v-spacer>
-      <span class="error--text">last</span>
-      &nbsp;|&nbsp;
-      <span class="success--text">mark</span>
+      <span v-if="lastPriceUp" class="success--text"
+        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+      </span>
+      <span v-else-if="!lastPriceUp" class="error--text"
+        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+      </span>
+      <span v-else
+        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+      </span>
+      {{ divider }}
+      <span v-if="markPriceUp" class="success--text"
+        >Mark:
+        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+      >
+      <span v-else-if="!markPriceUp" class="error--text"
+        >Mark:
+        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+      >
+      <span v-else
+        >Mark:
+        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+      >
     </v-app-bar>
 
     <v-main>
@@ -53,23 +72,28 @@
 
 <script>
 import Ladder from "./views/Ladder";
-import { mapMutations } from 'vuex'
+import store from "./store";
+import { mapMutations } from "vuex";
 
 export default {
+  store,
   props: {
-    source: String,
+    source: String
   },
   components: {
-    Ladder,
+    Ladder
   },
   methods: {
-      sendAssetChangeMsg(asset) {
-        this.$root.$emit('asset_change', asset)
-      },
-      ...mapMutations(['setAsset'])
+    sendAssetChangeMsg(asset) {
+      this.$root.$emit("asset_change", asset);
+    },
+    ...mapMutations(["setAsset"])
   },
   data: () => ({
     drawer: null,
+    lastPriceUp: false,
+    markPriceUp: false,
+    divider: `\xa0|\xa0`
   }),
   created() {
     this.$vuetify.theme.dark = true;
@@ -78,7 +102,18 @@ export default {
     this.$vuetify.theme.themes.dark.error = "#e44b8f";
   },
   mounted() {
-    this.sendAssetChangeMsg('asset_change', 'BTC-PERPETUAL')
+    this.sendAssetChangeMsg("asset_change", "BTC-PERPETUAL");
+  },
+  computed: {
+    lastAndMarkPrice() {
+      return store.getters.getLastAndMarkPriceByExchange("deribit");
+    }
+  },
+  watch: {
+    lastAndMarkPrice(newValue, oldValue) {
+      this.lastPriceUp = newValue.lastPrice > oldValue.lastPrice;
+      this.markPriceUp = newValue.markPrice > oldValue.markPrice;
+    }
   }
 };
 </script>
