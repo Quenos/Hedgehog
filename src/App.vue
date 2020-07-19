@@ -82,7 +82,6 @@ import store from "./store";
 import { mapMutations } from "vuex";
 
 export default {
-  store,
   props: {
     source: String,
   },
@@ -115,10 +114,11 @@ export default {
   },
   computed: {
     lastAndMarkPrice() {
-      return store.getters.getLastAndMarkPriceByExchange(
+      const prices = store.getters.getLastAndMarkPriceByExchangeInstrument(
         "deribit",
         store.getters.getAsset
       );
+      return {...prices}
     },
     apiLoaded() {
       return store.getters.apiLoaded("deribit");
@@ -126,7 +126,6 @@ export default {
   },
   watch: {
     lastAndMarkPrice (newValue, oldValue) {
-      console.log(newValue, oldValue);
       this.lastPriceUp = newValue.lastPrice > oldValue.lastPrice;
       this.lastPriceDn = newValue.lastPrice < oldValue.lastPrice;
       this.markPriceUp = newValue.markPrice > oldValue.markPrice;
@@ -134,6 +133,7 @@ export default {
     },
   },
 };
+
 </script>
 
 <style scoped></style>

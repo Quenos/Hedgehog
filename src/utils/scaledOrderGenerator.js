@@ -1,3 +1,4 @@
+/* eslint-disable */
 // Inspired by bitfinex. please don't sue me
 
 // Thanks to https://github.com/nice-table for the algo :)
@@ -32,7 +33,7 @@ const getAmountDistribution = (distribution, orderCount, coefficient) => {
   }
 
   if (distribution === ORDER_DISTRIBUTIONS.FLAT.label) {
-    return _.range(orderCount).map(100 / orderCount);
+    return _.range(orderCount).map(x => 100 / orderCount);
   }
 
   return new Error(`Unknown distribution type '${distribution}' was passed`);

@@ -23,18 +23,6 @@ const state = {
   },
 };
 
-/*
-{
-    deribit: [
-      {
-        label: "main",
-        apiKey: "-D5YHdyP",
-        apiSecret: "abdFm3PY38AvLGtukEk8BZfvx2zxQGOWn8v6R7cL4e4"
-      }
-    ]
-  }
-  */
-
 const getters = {
   getApiKeys: () => state.apiKeys,
   getApiKeysByExchange: (state) => (exchange) => {
@@ -63,7 +51,10 @@ const getters = {
       return [];
     }
   },
-  getLastAndMarkPriceByExchange: (state) => (exchange, instrument) => {
+  getLastAndMarkPriceByExchange: (state) => (exchange) => {
+    return state.lastAndMarkPrices[exchange][2]
+  },
+  getLastAndMarkPriceByExchangeInstrument: (state) => (exchange, instrument) => {
     let result = state.lastAndMarkPrices[exchange].filter((value) => {
       return value.instrument === instrument;
     });
