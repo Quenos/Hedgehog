@@ -11,10 +11,11 @@ export default {
     Vue.prototype.$deribitApi = new Vue({
       store,
       data: {
-        ws: null
+        ws: null,
       },
       methods: {
         initWs() {
+          console.log('Im here')
           const apiKeys = store.getters.getApiKeysByExchange("deribit");
           const key = apiKeys[0]["apiKey"];
           const secret = apiKeys[0]["apiSecret"];
@@ -37,8 +38,8 @@ export default {
                   client_id: key,
                   timestamp: timestamp,
                   nonce: "Nonce",
-                  data: ""
-                }
+                  data: "",
+                },
               })
             );
             setTimeout(() => {
@@ -51,9 +52,9 @@ export default {
                     "user.orders.BTC-PERPETUAL.100ms",
                     "user.orders.ETH-PERPETUAL.100ms",
                     "ticker.BTC-PERPETUAL.100ms",
-                    "ticker.ETH-PERPETUAL.100ms"
-                  ]
-                }
+                    "ticker.ETH-PERPETUAL.100ms",
+                  ],
+                },
               };
               this.ws.send(JSON.stringify(msg));
             }, 500);
@@ -63,14 +64,14 @@ export default {
               method: "public/set_heartbeat",
               id: 42,
               params: {
-                interval: 60
-              }
+                interval: 60,
+              },
             };
             this.ws.send(JSON.stringify(msg));
 
             this.getOpenOrders(store.getters.getAsset.substring(0, 3));
 
-            this.ws.onmessage = e => {
+            this.ws.onmessage = (e) => {
               let data = JSON.parse(e.data);
               this.handleOnMessage(data);
             };
@@ -81,7 +82,7 @@ export default {
             jsonrpc: "2.0",
             method: "public/test",
             id: 4152,
-            params: {}
+            params: {},
           };
           this.ws.send(JSON.stringify(msg));
         },
@@ -93,7 +94,7 @@ export default {
               case "user.orders.BTC-PERPETUAL.100ms":
                 store.commit("setOpenOrders", {
                   exchange: "deribit",
-                  openOrders: data.params.data
+                  openOrders: data.params.data,
                 });
                 break;
               case "user.orders.ETH-PERPETUAL.100ms":
@@ -102,7 +103,7 @@ export default {
                 store.commit("setLastAndMarkPrice", {
                   exchange: "deribit",
                   lastPrice: data.params.data.last_price,
-                  markPrice: data.params.data.mark_price
+                  markPrice: data.params.data.mark_price,
                 });
                 break;
             }
@@ -111,7 +112,7 @@ export default {
               case 676:
                 store.commit("setOpenOrders", {
                   exchange: "deribit",
-                  openOrders: data.result
+                  openOrders: data.result,
                 });
                 break;
             }
@@ -119,7 +120,7 @@ export default {
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {
           var ret_val = [];
-          orders.forEach(async order => {
+          orders.forEach(async (order) => {
             var side = null;
             var side_sl = null;
             if (order["side"].toLowerCase() === "buy") {
@@ -145,8 +146,8 @@ export default {
                     ? "immediate_or_cancel"
                     : "fill_or_kill",
                 post_only: post_only,
-                reduce_only: reduce_only
-              }
+                reduce_only: reduce_only,
+              },
             };
             this.ws.send(JSON.stringify(msg));
             if (parseFloat(order["stop_loss"]) > 0.0) {
@@ -166,8 +167,8 @@ export default {
                       ? "good_til_cancelled"
                       : order["time_in_force"] === "Immediate or Cancel"
                       ? "immediate_or_cancel"
-                      : "fill_or_kill"
-                }
+                      : "fill_or_kill",
+                },
               };
               this.ws.send(JSON.stringify(msg));
             }
@@ -181,8 +182,8 @@ export default {
             method: "private/cancel",
             id: 1291,
             params: {
-              order_id
-            }
+              order_id,
+            },
           };
           this.ws.send(JSON.stringify(msg));
         },
@@ -192,7 +193,7 @@ export default {
             jsonrpc: "2.0",
             method: "private/cancel_all",
             id: 1290,
-            params: {}
+            params: {},
           };
           this.ws.send(JSON.stringify(msg));
         },
@@ -203,8 +204,8 @@ export default {
             method: "private/get_open_orders_by_currency",
             id: 676,
             params: {
-              currency: asset
-            }
+              currency: asset,
+            },
           };
           this.ws.send(JSON.stringify(msg));
         },
@@ -215,18 +216,28 @@ export default {
             method: "private/get_position",
             id: 983,
             params: {
-              currency: asset
-            }
+              currency: asset,
+            },
           };
           this.ws.send(JSON.stringify(msg));
-        }
+        },
       },
       computed: {
-        ...mapGetters(["getApiKeys"])
+        ...mapGetters(["getApiKeys"]),
+        apiKeysLoaded: () => {
+          let x = store.getters.apiLoaded("deribit");
+          if (x) {
+            this.initWs()
+          } 
+          return x
+        },
       },
       created() {
-        this.initWs();
-      }
+        store.dispatch("loadApiKeys");
+        if (store.getters.apiLoaded("deribit")) {
+          this.initWs();
+        }
+      },
     });
-  }
+  },
 };

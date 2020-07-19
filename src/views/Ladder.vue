@@ -165,7 +165,7 @@
 // @ is an alias to /src
 import { mapGetters } from "vuex";
 import store from "../store";
-import { generateOrders } from "@/components/scaledOrderGenerator.js";
+import { generateOrders } from "@/utils/scaledOrderGenerator.js";
 
 export default {
   name: "Ladder",

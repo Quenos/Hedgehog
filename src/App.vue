@@ -1,6 +1,7 @@
 <template>
   <v-app id="inspire">
     <v-navigation-drawer v-model="drawer" app clipped>
+
       <v-list dense>
         <v-list-item link>
           <v-list-item-action>
@@ -15,7 +16,7 @@
             <v-icon>mdi-cog</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>Settings</v-list-item-title>
+            <APIDialog/>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -37,7 +38,7 @@
       <span v-if="lastPriceUp" class="success--text"
         >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
       </span>
-      <span v-else-if="!lastPriceUp" class="error--text"
+      <span v-else-if="lastPriceDn" class="error--text"
         >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
       </span>
       <span v-else
@@ -48,7 +49,7 @@
         >Mark:
         <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
       >
-      <span v-else-if="!markPriceUp" class="error--text"
+      <span v-else-if="markPriceDn" class="error--text"
         >Mark:
         <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
       >
@@ -59,7 +60,13 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder />
+      <Ladder v-if="apiLoaded" />
+      <v-row v-else justify="center">
+        <v-col align="center" sm="12">
+        <h1>Enter API keys to get started</h1>
+        </v-col>
+      </v-row>
+
     </v-main>
 
     <v-footer app>
@@ -72,6 +79,7 @@
 
 <script>
 import Ladder from "./views/Ladder";
+import APIDialog from "@/components/APIDialog"
 import store from "./store";
 import { mapMutations } from "vuex";
 
@@ -81,7 +89,8 @@ export default {
     source: String
   },
   components: {
-    Ladder
+    Ladder,
+    APIDialog,
   },
   methods: {
     sendAssetChangeMsg(asset) {
@@ -93,6 +102,8 @@ export default {
     drawer: null,
     lastPriceUp: false,
     markPriceUp: false,
+    lastPriceDn: false,
+    markPriceDn: false,
     divider: `\xa0|\xa0`
   }),
   created() {
@@ -107,12 +118,17 @@ export default {
   computed: {
     lastAndMarkPrice() {
       return store.getters.getLastAndMarkPriceByExchange("deribit");
+    },
+    apiLoaded() {
+      return store.getters.apiLoaded("deribit")
     }
   },
   watch: {
     lastAndMarkPrice(newValue, oldValue) {
       this.lastPriceUp = newValue.lastPrice > oldValue.lastPrice;
+      this.lastPriceDn = newValue.lastPrice < oldValue.lastPrice;
       this.markPriceUp = newValue.markPrice > oldValue.markPrice;
+      this.markPriceDn = newValue.markPrice < oldValue.markPrice;
     }
   }
 };
