@@ -172,11 +172,13 @@ export default {
   components: {},
   methods: {
     async cancelAllOrderItems() {
-      await this.$deribitApi.cancelAllOrders();
+      this.openOrderItems.forEach(async (openOrder) => {
+        await this.$deribitApi.cancelOrder(openOrder["orderId"]);
+      });
       this.openOrders();
     },
     async cancelOrders(direction) {
-      this.openOrderItems.forEach(async openOrder => {
+      this.openOrderItems.forEach(async (openOrder) => {
         if (openOrder["orderSide"] === direction) {
           await this.$deribitApi.cancelOrder(openOrder["orderId"]);
         }
@@ -195,7 +197,7 @@ export default {
         var longs = 0;
         var shorts = 0;
         this.openOrderItems = [];
-        this.theOpenOrders.forEach(openOrder => {
+        this.theOpenOrders.forEach((openOrder) => {
           const dateObject = new Date(openOrder["last_update_timestamp"]);
           var price;
           if (openOrder["price"] === "market_price") {
@@ -215,7 +217,7 @@ export default {
                 : openOrder["time_in_force"] === "immediate_or_cancel"
                 ? "Immediate or Cancel"
                 : "Fill or Kill",
-            orderUpdated: dateObject.toLocaleString()
+            orderUpdated: dateObject.toLocaleString(),
           });
           openOrder["direction"] === "buy"
             ? (longs += openOrder["amount"])
@@ -263,16 +265,16 @@ export default {
           priceUpper: this.higher_price,
           distribution: this.scale,
           tickSize: 0.5,
-          coefficient: this.scale_coefficient
+          coefficient: this.scale_coefficient,
         });
-        orders.forEach(order => {
+        orders.forEach((order) => {
           this.orders.push({
             side: "Sell",
             quantity: order["amount"],
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
-            time_in_force: this.time_in_force
+            time_in_force: this.time_in_force,
           });
         });
       }
@@ -298,20 +300,20 @@ export default {
               ? "Decreasing"
               : "Increasing",
           tickSize: 0.5,
-          coefficient: this.scale_coefficient
+          coefficient: this.scale_coefficient,
         });
-        orders.reverse().forEach(order => {
+        orders.reverse().forEach((order) => {
           this.orders.push({
             side: "Buy",
             quantity: order["amount"],
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
-            time_in_force: this.time_in_force
+            time_in_force: this.time_in_force,
           });
         });
       }
-    }
+    },
   },
   data: () => ({
     deribitExchange: true,
@@ -340,45 +342,48 @@ export default {
         text: "Side",
         align: "start",
         sortable: false,
-        value: "side"
+        value: "side",
       },
       { text: "Qty", sortable: false, value: "quantity" },
       { text: "Price", sortable: false, value: "price" },
       { text: "Take Profit", sortable: false, value: "take_profit" },
       { text: "Stop Loss", sortable: false, value: "stop_loss" },
-      { text: "Time in Force", sortable: false, value: "time_in_force" }
+      { text: "Time in Force", sortable: false, value: "time_in_force" },
     ],
     openOrdersHeaders: [
       {
         text: "Side",
         align: "start",
         sortable: false,
-        value: "orderSide"
+        value: "orderSide",
       },
       { text: "Qty", sortable: false, value: "orderQuantity" },
       { text: "Price", sortable: false, value: "orderPrice" },
       { text: "Type", sortable: false, value: "orderType" },
       { text: "Time in Force", sortable: false, value: "orderTimeInForce" },
       { text: "Updated", sortable: false, value: "orderUpdated" },
-      { text: "Cancel", sortable: false, value: "orderCancel" }
+      { text: "Cancel", sortable: false, value: "orderCancel" },
     ],
     rules: {
-      required: value => !!value || "Required.",
-      number: value => {
+      required: (value) => !!value || "Required.",
+      number: (value) => {
         const pattern = /(^[1-9][0-9]*([.][0-9]*)?$)|^$/;
         return pattern.test(value) || "Input must be numeric.";
       },
-      number_int: value => {
+      number_int: (value) => {
         const pattern = /^[1-9][0-9]*$/;
         return pattern.test(value) || "Input cannot have a fraction.";
-      }
-    }
+      },
+    },
   }),
   computed: {
     ...mapGetters(["getAsset", "getExchange"]),
     theOpenOrders() {
-      return store.getters.getOpenOrdersByExchange(this.getExchange);
-    }
+      return store.getters.getOpenOrdersByExchangeInstrument(
+        this.getExchange,
+        this.getAsset
+      );
+    },
   },
   mounted: function() {
     // setInterval(() => this.openOrders(), 15 * 1000);
@@ -386,7 +391,7 @@ export default {
   watch: {
     theOpenOrders() {
       this.openOrders();
-    }
-  }
+    },
+  },
 };
 </script>

@@ -1,7 +1,6 @@
 <template>
   <v-app id="inspire">
     <v-navigation-drawer v-model="drawer" app clipped>
-
       <v-list dense>
         <v-list-item link>
           <v-list-item-action>
@@ -16,7 +15,7 @@
             <v-icon>mdi-cog</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <APIDialog/>
+            <APIDialog />
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -63,10 +62,9 @@
       <Ladder v-if="apiLoaded" />
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
-        <h1>Enter API keys to get started</h1>
+          <h1>Enter API keys to get started</h1>
         </v-col>
       </v-row>
-
     </v-main>
 
     <v-footer app>
@@ -79,14 +77,14 @@
 
 <script>
 import Ladder from "./views/Ladder";
-import APIDialog from "@/components/APIDialog"
+import APIDialog from "@/components/APIDialog";
 import store from "./store";
 import { mapMutations } from "vuex";
 
 export default {
   store,
   props: {
-    source: String
+    source: String,
   },
   components: {
     Ladder,
@@ -96,15 +94,15 @@ export default {
     sendAssetChangeMsg(asset) {
       this.$root.$emit("asset_change", asset);
     },
-    ...mapMutations(["setAsset"])
+    ...mapMutations(["setAsset"]),
   },
   data: () => ({
     drawer: null,
     lastPriceUp: false,
-    markPriceUp: false,
     lastPriceDn: false,
+    markPriceUp: false,
     markPriceDn: false,
-    divider: `\xa0|\xa0`
+    divider: `\xa0|\xa0`,
   }),
   created() {
     this.$vuetify.theme.dark = true;
@@ -117,20 +115,24 @@ export default {
   },
   computed: {
     lastAndMarkPrice() {
-      return store.getters.getLastAndMarkPriceByExchange("deribit");
+      return store.getters.getLastAndMarkPriceByExchange(
+        "deribit",
+        store.getters.getAsset
+      );
     },
     apiLoaded() {
-      return store.getters.apiLoaded("deribit")
-    }
+      return store.getters.apiLoaded("deribit");
+    },
   },
   watch: {
-    lastAndMarkPrice(newValue, oldValue) {
+    lastAndMarkPrice (newValue, oldValue) {
+      console.log(newValue, oldValue);
       this.lastPriceUp = newValue.lastPrice > oldValue.lastPrice;
       this.lastPriceDn = newValue.lastPrice < oldValue.lastPrice;
       this.markPriceUp = newValue.markPrice > oldValue.markPrice;
       this.markPriceDn = newValue.markPrice < oldValue.markPrice;
-    }
-  }
+    },
+  },
 };
 </script>
 

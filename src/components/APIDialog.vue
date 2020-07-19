@@ -49,7 +49,14 @@
       <v-divider></v-divider>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" text @click="dialog =  false; storeKeys()">
+        <v-btn
+          color="primary"
+          text
+          @click="
+            dialog = false;
+            storeKeys();
+          "
+        >
           Close
         </v-btn>
       </v-card-actions>
@@ -69,18 +76,18 @@ export default {
         { text: "Label", value: "label" },
         { text: "Api Key", value: "apiKey" },
         { text: "Api Secret", value: "apiSecret" },
-        { text: "Remove", value: "remove" },
+        { text: "Remove", value: "remove" }
       ],
       apiKeyRules: [
-        (v) => !!v || "Api key is required",
-        (v) => (v && v.length === 8) || "Api key must be 18 characters",
+        v => !!v || "Api key is required",
+        v => (v && v.length === 8) || "Api key must be 18 characters"
       ],
       privateKeyRules: [
-        (v) => !!v || "Private Key is required",
-        (v) => (v && v.length === 43) || "Private Key must be 36 characters",
+        v => !!v || "Private Key is required",
+        v => (v && v.length === 43) || "Private Key must be 36 characters"
       ],
-      accountLabelRules: [(v) => !!v || "Account Label is required"],
-      valid: true,
+      accountLabelRules: [v => !!v || "Account Label is required"],
+      valid: true
     };
   },
   methods: {
@@ -90,26 +97,26 @@ export default {
         keys: {
           label: "",
           apiKey: "",
-          apiSecret: "",
-        },
+          apiSecret: ""
+        }
       });
     },
-    remove: (item) => {
+    remove: item => {
       store.commit("removeApiKey", {
         exchange: "deribit",
-        keys: item,
+        keys: item
       });
       store.dispatch("storeApiKeys");
     },
     storeKeys: () => {
       store.dispatch("storeApiKeys");
-    },
+    }
   },
   computed: {
     theApiKeys() {
       return store.getters.getApiKeysByExchange("deribit");
-    },
-  },
+    }
+  }
 };
 </script>
 

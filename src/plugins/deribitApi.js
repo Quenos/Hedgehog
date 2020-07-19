@@ -15,7 +15,6 @@ export default {
       },
       methods: {
         initWs() {
-          console.log('Im here')
           const apiKeys = store.getters.getApiKeysByExchange("deribit");
           const key = apiKeys[0]["apiKey"];
           const secret = apiKeys[0]["apiSecret"];
@@ -62,7 +61,7 @@ export default {
             let msg = {
               jsonrpc: "2.0",
               method: "public/set_heartbeat",
-              id: 42,
+              id: 58,
               params: {
                 interval: 60,
               },
@@ -84,7 +83,12 @@ export default {
             id: 4152,
             params: {},
           };
-          this.ws.send(JSON.stringify(msg));
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
         handleOnMessage(data) {
           if ("method" in data && data.method === "heartbeat") {
@@ -98,10 +102,23 @@ export default {
                 });
                 break;
               case "user.orders.ETH-PERPETUAL.100ms":
+                store.commit("setOpenOrders", {
+                  exchange: "deribit",
+                  openOrders: data.params.data,
+                });
                 break;
               case "ticker.BTC-PERPETUAL.100ms":
                 store.commit("setLastAndMarkPrice", {
                   exchange: "deribit",
+                  instrument: "BTC-PERPETUAL",
+                  lastPrice: data.params.data.last_price,
+                  markPrice: data.params.data.mark_price,
+                });
+                break;
+              case "ticker.ETH-PERPETUAL.100ms":
+                store.commit("setLastAndMarkPrice", {
+                  exchange: "deribit",
+                  instrument: "ETH-PERPETUAL",
                   lastPrice: data.params.data.last_price,
                   markPrice: data.params.data.mark_price,
                 });
@@ -149,7 +166,13 @@ export default {
                 reduce_only: reduce_only,
               },
             };
-            this.ws.send(JSON.stringify(msg));
+            try {
+              this.ws.send(JSON.stringify(msg));
+            } catch (err) {
+              this.initWs();
+              this.ws.send(JSON.stringify(msg));
+            }
+
             if (parseFloat(order["stop_loss"]) > 0.0) {
               let msg = {
                 jsonrpc: "2.0",
@@ -170,7 +193,12 @@ export default {
                       : "fill_or_kill",
                 },
               };
-              this.ws.send(JSON.stringify(msg));
+              try {
+                this.ws.send(JSON.stringify(msg));
+              } catch (err) {
+                this.initWs();
+                this.ws.send(JSON.stringify(msg));
+              }
             }
           });
           return ret_val;
@@ -185,7 +213,12 @@ export default {
               order_id,
             },
           };
-          this.ws.send(JSON.stringify(msg));
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
 
         async cancelAllOrders() {
@@ -195,7 +228,13 @@ export default {
             id: 1290,
             params: {},
           };
-          this.ws.send(JSON.stringify(msg));
+
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
 
         async getOpenOrders(asset) {
@@ -207,7 +246,12 @@ export default {
               currency: asset,
             },
           };
-          this.ws.send(JSON.stringify(msg));
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
 
         async getPositions(asset) {
@@ -219,7 +263,12 @@ export default {
               currency: asset,
             },
           };
-          this.ws.send(JSON.stringify(msg));
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
       },
       computed: {
@@ -227,9 +276,9 @@ export default {
         apiKeysLoaded: () => {
           let x = store.getters.apiLoaded("deribit");
           if (x) {
-            this.initWs()
-          } 
-          return x
+            this.initWs();
+          }
+          return x;
         },
       },
       created() {

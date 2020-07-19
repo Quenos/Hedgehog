@@ -1,3 +1,4 @@
+/* eslint-disable */
 const state = {
   apiKeys: {
     deribit: [],
@@ -12,10 +13,13 @@ const state = {
     deribit: [],
   },
   lastAndMarkPrices: {
-    deribit: {
-      markPrice: 0,
-      lastPrice: 0,
-    },
+    deribit: [
+      {
+        instrument: "",
+        markPrice: 0,
+        lastPrice: 0,
+      },
+    ],
   },
 };
 
@@ -34,7 +38,11 @@ const state = {
 const getters = {
   getApiKeys: () => state.apiKeys,
   getApiKeysByExchange: (state) => (exchange) => {
-    return state.apiKeys[exchange];
+    try {
+      return state.apiKeys[exchange];
+    } catch (err) {
+      return [];
+    }
   },
   getRestUrlByExchange: (state) => (exchange) => {
     return state.apiKeys[exchange]["rest"];
@@ -45,8 +53,26 @@ const getters = {
   getOpenOrdersByExchange: (state) => (exchange) => {
     return state.openOrders[exchange];
   },
-  getLastAndMarkPriceByExchange: (state) => (exchange) => {
-    return state.lastAndMarkPrices[exchange];
+  getOpenOrdersByExchangeInstrument: (state) => (exchange, instrument) => {
+    let result = state.openOrders[exchange].filter((value) => {
+      return value.instrument_name === instrument;
+    });
+    if (result.length !== 0) {
+      return result;
+    } else {
+      return [];
+    }
+  },
+  getLastAndMarkPriceByExchange: (state) => (exchange, instrument) => {
+    let result = state.lastAndMarkPrices[exchange].filter((value) => {
+      return value.instrument === instrument;
+    });
+
+    if (result.length !== 0) {
+      return result[0];
+    } else {
+      return { instrument, lastPrice: 0, markPrice: 0 };
+    }
   },
   apiLoaded: (state) => (exchange) => {
     try {
@@ -62,7 +88,9 @@ const getters = {
 
 const actions = {
   loadApiKeys() {
-    state.apiKeys = JSON.parse(localStorage.getItem("apiKeys"));
+    if (JSON.parse(localStorage.getItem("apiKeys"))) {
+      state.apiKeys = JSON.parse(localStorage.getItem("apiKeys"));
+    }
   },
   storeApiKeys() {
     localStorage.setItem("apiKeys", JSON.stringify(state.apiKeys));
@@ -96,10 +124,21 @@ const mutations = {
     });
   },
   setLastAndMarkPrice(state, data) {
-    state.lastAndMarkPrices[data.exchange] = {
-      lastPrice: data.lastPrice,
-      markPrice: data.markPrice,
-    };
+    let updated = false;
+    state.lastAndMarkPrices[data.exchange].forEach((item) => {
+      if (item.instrument === data.instrument) {
+        item.lastPrice = data.lastPrice;
+        item.markPrice = data.markPrice;
+        updated = true;
+      }
+    });
+    if (!updated) {
+      state.lastAndMarkPrices[data.exchange].push({
+        instrument: data.instrument,
+        lastPrice: data.lastPrice,
+        markPrice: data.markPrice,
+      });
+    }
   },
 };
 
