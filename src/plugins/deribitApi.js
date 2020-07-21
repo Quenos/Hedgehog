@@ -1,5 +1,3 @@
-/* forked from: https://github.com/askmike/deribit-v2-ws */
-
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import ReconnectingWebSocket from "reconnecting-websocket";
 

@@ -23,6 +23,14 @@
               small
             ></v-text-field>
           </template>
+          <template v-slot:item.exchange="{ item }">
+            <v-text-field
+              v-model="item.exchange"
+              :rules="exchangeLabelRules"
+              readonly
+              small
+            ></v-text-field>
+          </template>
           <template v-slot:item.apiKey="{ item }">
             <v-text-field
               v-model="item.apiKey"
@@ -74,28 +82,31 @@ export default {
       dialog: false,
       headers: [
         { text: "Label", value: "label" },
+        { text: "Exchange", value: "exchange"},
         { text: "Api Key", value: "apiKey" },
         { text: "Api Secret", value: "apiSecret" },
         { text: "Remove", value: "remove" }
       ],
       apiKeyRules: [
         v => !!v || "Api key is required",
-        v => (v && v.length === 8) || "Api key must be 18 characters"
+        v => (v && v.length === 8) || "Api key must be 8 characters"
       ],
       privateKeyRules: [
         v => !!v || "Private Key is required",
-        v => (v && v.length === 43) || "Private Key must be 36 characters"
+        v => (v && v.length === 43) || "Private Key must be 43 characters"
       ],
       accountLabelRules: [v => !!v || "Account Label is required"],
-      valid: true
+      exchangeLabelRules: [v => !!v || "Exchange Label is required"],
+      valid: true,
     };
   },
   methods: {
     add: () => {
       store.commit("addApiKey", {
-        exchange: "deribit",
+        exchange: store.getters.getExchange,
         keys: {
           label: "",
+          exchange: store.getters.getExchange,
           apiKey: "",
           apiSecret: ""
         }
@@ -103,7 +114,7 @@ export default {
     },
     remove: item => {
       store.commit("removeApiKey", {
-        exchange: "deribit",
+        exchange: store.getters.getExchange,
         keys: item
       });
       store.dispatch("storeApiKeys");
@@ -114,8 +125,8 @@ export default {
   },
   computed: {
     theApiKeys() {
-      return store.getters.getApiKeysByExchange("deribit");
-    }
+      return store.getters.getApiKeysByExchange(store.getters.getExchange);
+    },
   }
 };
 </script>

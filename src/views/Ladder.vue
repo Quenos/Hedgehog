@@ -173,20 +173,20 @@ export default {
   methods: {
     async cancelAllOrderItems() {
       this.openOrderItems.forEach(async (openOrder) => {
-        await this.$deribitApi.cancelOrder(openOrder["orderId"]);
+        await this.$apiAbstraction.cancelOrder(openOrder["orderId"]);
       });
       this.openOrders();
     },
     async cancelOrders(direction) {
       this.openOrderItems.forEach(async (openOrder) => {
         if (openOrder["orderSide"] === direction) {
-          await this.$deribitApi.cancelOrder(openOrder["orderId"]);
+          await this.$apiAbstraction.cancelOrder(openOrder["orderId"]);
         }
       });
       this.openOrders();
     },
     async cancelOrderId(item) {
-      await this.$deribitApi.cancelOrder(item["orderId"]);
+      await this.$apiAbstraction.cancelOrder(item["orderId"])
       this.openOrders();
     },
     async openOrders() {
@@ -240,7 +240,7 @@ export default {
     },
     async submit_orders() {
       this.showPreview = !this.showPreview;
-      await this.$deribitApi.enterOrders(
+      await this.$apiAbstraction.enterOrders( 
         this.getAsset,
         "limit",
         this.post_only,
@@ -322,16 +322,16 @@ export default {
     showOpenOrders: false,
     openBuyOrders: 0,
     openSellOrders: 0,
-    higher_price: "",
-    lower_price: "",
-    quantity: "",
-    number_of_orders: "",
+    higher_price: "3500",
+    lower_price: "3000",
+    quantity: "3000",
+    number_of_orders: "10",
     take_profit: null,
     stop_loss: "",
-    scale: "",
+    scale: "Flat",
     scl_items: ["Flat", "Increasing", "Decreasing"],
-    scale_coefficient: "",
-    time_in_force: "",
+    scale_coefficient: "10",
+    time_in_force: "Good Till Cancelled",
     tif_items: ["Good Till Cancelled", "Immediate or Cancel", "Fill or Kill"],
     orders: [],
     openOrderItems: [],

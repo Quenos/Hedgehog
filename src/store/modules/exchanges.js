@@ -1,7 +1,10 @@
 /* eslint-disable */
 const state = {
+  asset: "BTC-PERPETUAL",
+  exchange: "deribit",
   apiKeys: {
     deribit: [],
+    binance: [],
   },
   urls: {
     deribit: {
@@ -21,9 +24,16 @@ const state = {
       },
     ],
   },
+  availableExchanges: ["deribit", "binance"],
 };
 
 const getters = {
+  getAsset: () => state.asset,
+  getExchange: () => state.exchange,
+  getAvaialableExchanges: () => {
+    console.log(state.availableExchanges);
+    return state.availableExchanges;
+  },
   getApiKeys: () => state.apiKeys,
   getApiKeysByExchange: (state) => (exchange) => {
     try {
@@ -42,9 +52,9 @@ const getters = {
     return state.openOrders[exchange];
   },
   getOpenOrdersByExchangeInstrument: (state) => (exchange, instrument) => {
-    let result = state.openOrders[exchange].filter((value) => {
-      return value.instrument_name === instrument;
-    });
+    let result = state.openOrders[exchange].filter(
+      (value) => value.instrument_name === instrument
+    );
     if (result.length !== 0) {
       return result;
     } else {
@@ -52,12 +62,15 @@ const getters = {
     }
   },
   getLastAndMarkPriceByExchange: (state) => (exchange) => {
-    return state.lastAndMarkPrices[exchange][2]
+    return state.lastAndMarkPrices[exchange][2];
   },
-  getLastAndMarkPriceByExchangeInstrument: (state) => (exchange, instrument) => {
-    let result = state.lastAndMarkPrices[exchange].filter((value) => {
-      return value.instrument === instrument;
-    });
+  getLastAndMarkPriceByExchangeInstrument: (state) => (
+    exchange,
+    instrument
+  ) => {
+    let result = state.lastAndMarkPrices[exchange].filter(
+      (value) => value.instrument === instrument
+    );
 
     if (result.length !== 0) {
       return result[0];
@@ -75,6 +88,7 @@ const getters = {
       return false;
     }
   },
+  cancelOrder: () => state.cancelOrder,
 };
 
 const actions = {
@@ -90,21 +104,23 @@ const actions = {
 
 const mutations = {
   addApiKey(state, data) {
+    console.log(data);
+    data.exchange = data.exchange.toLowerCase();
+    if (!(data.exchange in state.apiKeys)) {
+      state.apiKeys[data.exchange] = [];
+    }
+
     state.apiKeys[data.exchange].push(data.keys);
   },
   removeApiKey(state, data) {
     state.apiKeys[data.exchange] = state.apiKeys[data.exchange].filter(
-      (value) => {
-        return value.label !== data.keys.label;
-      }
+      (value) => value.label !== data.keys.label
     );
   },
   setOpenOrders(state, data) {
     data.openOrders.forEach((openOrder) => {
       state.openOrders[data.exchange] = state.openOrders[data.exchange].filter(
-        (value) => {
-          return value.order_id !== openOrder.order_id;
-        }
+        (value) => value.order_id !== openOrder.order_id
       );
       if (
         openOrder.order_state === "open" ||
@@ -131,6 +147,8 @@ const mutations = {
       });
     }
   },
+  setAsset: (state, asset) => (state.asset = asset),
+  setExchange: (state, exchange) => (state.exchange = exchange),
 };
 
 export default {

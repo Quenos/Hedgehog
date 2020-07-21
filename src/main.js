@@ -7,7 +7,10 @@ import vuetify from "./plugins/vuetify";
 Vue.config.productionTip = false;
 
 import deribitApi from "./plugins/deribitApi";
+import apiAbstraction from "./plugins/apiAbstraction";
+
 Vue.use(deribitApi);
+Vue.use(apiAbstraction)
 
 new Vue({
   router,
