@@ -1,5 +1,6 @@
 <template>
   <div class="ladder">
+    <OpenPositions />
     <v-container fluid>
       <v-form ref="form" v-model="valid" justify="center">
         <v-row justify="center">
@@ -162,14 +163,16 @@
 </template>
 
 <script>
+/* eslint-disable */
 // @ is an alias to /src
 import { mapGetters } from "vuex";
 import store from "../store";
 import { generateOrders } from "@/utils/scaledOrderGenerator.js";
+import OpenPositions  from "@/components/OpenPositions"
 
 export default {
   name: "Ladder",
-  components: {},
+  components: { OpenPositions },
   methods: {
     async cancelAllOrderItems() {
       this.openOrderItems.forEach(async (openOrder) => {

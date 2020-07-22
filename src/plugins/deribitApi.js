@@ -72,6 +72,7 @@ export default {
               let data = JSON.parse(e.data);
               this.handleOnMessage(data);
             };
+            setInterval(() => this.getPositions(), 5 * 1000);
           };
         },
         sendHeartbeat() {
@@ -123,12 +124,58 @@ export default {
                 break;
             }
           } else if ("id" in data) {
+            let a = []
             switch (data.id) {
               case 676:
                 store.commit("setOpenOrders", {
                   exchange: "deribit",
                   openOrders: data.result,
                 });
+                break;
+              case 983:
+                if (data.result.length === 0) {
+                   a.push({
+                      symbol: "",
+                      side: "",
+                      size: "",
+                      position_value: "",
+                      entry_price: "",
+                      liq_price: "",
+                      position_margin: "",
+                      leverage: "",
+                      unrealised_pnl_last: "",
+                      realised_pnl: "",
+                      daily_total: "",
+                    })
+                    store.commit("setOpenPositions", {
+                      exchange: "deribit",
+                      result: a})
+                  } else {
+                  data.result.forEach((value) => {
+                  a.push({
+                      symbol: value["instrument_name"],
+                      side: value["direction"],
+                      size: value["size"],
+                      position_value: value["size_currency"].toFixed(
+                        5
+                      ),
+                      entry_price: value["average_price"],
+                      liq_price: value["estimated_liquidation_price"],
+                      position_margin: value[
+                        "maintenance_margin"
+                      ].toFixed(4),
+                      leverage: value["leverage"],
+                      unrealised_pnl_last: value["floating_profit_loss"],
+                      realised_pnl: value[
+                        "realized_profit_loss"
+                      ].toFixed(4),
+                      daily_total: value["total_profit_loss"].toFixed(
+                        4
+                      ),
+                    },
+                  );})
+                  store.commit("setOpenPositions", {exchange: 'deribit', result: a})
+                }
                 break;
             }
           }
@@ -252,13 +299,14 @@ export default {
           }
         },
 
-        async getPositions(asset) {
+        async getPositions() {
           let msg = {
             jsonrpc: "2.0",
-            method: "private/get_position",
+            method: "private/get_positions",
             id: 983,
             params: {
-              currency: asset,
+              currency: store.getters.getAsset.substring(0, 3),
+              kind: "future",
             },
           };
           try {

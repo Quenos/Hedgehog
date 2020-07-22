@@ -1,4 +1,3 @@
-/* eslint-disable */
 const state = {
   asset: "BTC-PERPETUAL",
   exchange: "deribit",
@@ -25,13 +24,16 @@ const state = {
     ],
   },
   availableExchanges: ["deribit", "binance"],
+  openPositions: {
+    deribit: [],
+    binance: [],
+  },
 };
 
 const getters = {
   getAsset: () => state.asset,
   getExchange: () => state.exchange,
   getAvaialableExchanges: () => {
-    console.log(state.availableExchanges);
     return state.availableExchanges;
   },
   getApiKeys: () => state.apiKeys,
@@ -89,6 +91,9 @@ const getters = {
     }
   },
   cancelOrder: () => state.cancelOrder,
+  getOpenPositionsByExchange: (state) => (exchange) => {
+    return state.openPositions[exchange];
+  },
 };
 
 const actions = {
@@ -104,7 +109,6 @@ const actions = {
 
 const mutations = {
   addApiKey(state, data) {
-    console.log(data);
     data.exchange = data.exchange.toLowerCase();
     if (!(data.exchange in state.apiKeys)) {
       state.apiKeys[data.exchange] = [];
@@ -149,6 +153,10 @@ const mutations = {
   },
   setAsset: (state, asset) => (state.asset = asset),
   setExchange: (state, exchange) => (state.exchange = exchange),
+  setOpenPositions: (state, data) => {
+    state.openPositions[data.exchange] = [];
+    state.openPositions[data.exchange] = data.result;
+  },
 };
 
 export default {
