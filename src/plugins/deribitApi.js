@@ -124,7 +124,7 @@ export default {
                 break;
             }
           } else if ("id" in data) {
-            let a = []
+            let a = [];
             switch (data.id) {
               case 676:
                 store.commit("setOpenOrders", {
@@ -134,49 +134,49 @@ export default {
                 break;
               case 983:
                 if (data.result.length === 0) {
-                   a.push({
-                      symbol: "",
-                      side: "",
-                      size: "",
-                      position_value: "",
-                      entry_price: "",
-                      liq_price: "",
-                      position_margin: "",
-                      leverage: "",
-                      unrealised_pnl_last: "",
-                      realised_pnl: "",
-                      daily_total: "",
-                    })
-                    store.commit("setOpenPositions", {
-                      exchange: "deribit",
-                      result: a})
-                  } else {
-                  data.result.forEach((value) => {
                   a.push({
-                      symbol: value["instrument_name"],
-                      side: value["direction"],
-                      size: value["size"],
-                      position_value: value["size_currency"].toFixed(
-                        5
-                      ),
-                      entry_price: value["average_price"],
-                      liq_price: value["estimated_liquidation_price"],
-                      position_margin: value[
-                        "maintenance_margin"
-                      ].toFixed(4),
-                      leverage: value["leverage"],
-                      unrealised_pnl_last: value["floating_profit_loss"],
-                      realised_pnl: value[
-                        "realized_profit_loss"
-                      ].toFixed(4),
-                      daily_total: value["total_profit_loss"].toFixed(
-                        4
-                      ),
-                    },
-                  );})
-                  store.commit("setOpenPositions", {exchange: 'deribit', result: a})
+                    symbol: "",
+                    side: "",
+                    size: "",
+                    position_value: "",
+                    entry_price: "",
+                    liq_price: "",
+                    position_margin: "",
+                    leverage: "",
+                    unrealised_pnl_last: "",
+                    realised_pnl: "",
+                    daily_total: "",
+                  });
+                  store.commit("setOpenPositions", {
+                    exchange: "deribit",
+                    result: a,
+                  });
+                } else {
+                  data.result.forEach((value) => {
+                    if (value["direction"] !== "zero") {
+                      a.push({
+                        symbol: value["instrument_name"],
+                        side: value["direction"],
+                        size: value["size"],
+                        position_value: value["size_currency"],
+                        entry_price: value["average_price"],
+                        liq_price: value["estimated_liquidation_price"],
+                        position_margin: value["maintenance_margin"],
+                        leverage: value["leverage"],
+                        unrealised_pnl_last: value["floating_profit_loss"],
+                        realised_pnl: value["realized_profit_loss"],
+                        daily_total: value["total_profit_loss"],
+                      });
+                    }
+                  });
+                  store.commit("setOpenPositions", {
+                    exchange: "deribit",
+                    result: a,
+                  });
                 }
                 break;
+              case 207:
+                console.log(data);
             }
           }
         },
@@ -247,6 +247,25 @@ export default {
             }
           });
           return ret_val;
+        },
+
+        async marketOrder(asset, side, size) {
+          let msg = {
+            jsonrpc: "2.0",
+            method: `private/${side}`,
+            id: 207,
+            params: {
+              instrument_name: asset,
+              amount: size,
+              type: "market",
+            },
+          };
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
         },
 
         async cancelOrder(order_id) {

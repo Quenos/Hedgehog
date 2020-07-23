@@ -17,6 +17,12 @@ export default {
             );
           }
         },
+        
+        async marketOrder(symbol, side, size) {
+          if (store.getters.getExchange == "deribit") {
+            this.$deribitApi.marketOrder(symbol, side, size)
+          }
+        },
 
         cancelOrder(order_id) {
           if (store.getters.getExchange == "deribit") {
