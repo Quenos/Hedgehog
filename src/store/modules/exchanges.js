@@ -1,10 +1,9 @@
 const state = {
+  version: "0.1.1",
   asset: "BTC-PERPETUAL",
   exchange: "deribit",
-  apiKeys: {
-    deribit: [],
-    binance: [],
-  },
+  account: "",
+  apiKeys: [],
   urls: {
     deribit: {
       rest: `https://www.deribit.com/api/v2/`,
@@ -36,14 +35,14 @@ const getters = {
   getAvaialableExchanges: () => {
     return state.availableExchanges;
   },
-  getApiKeys: () => state.apiKeys,
-  getApiKeysByExchange: (state) => (exchange) => {
-    try {
-      return state.apiKeys[exchange];
-    } catch (err) {
-      return [];
+  getApiKeys: () => state.apiKeys.find(value => value.label == state.account),
+  getAccounts: () => {
+    if (state.apiKeys.length === 0) {
+      return []
     }
+    return state.apiKeys.map(value => value.label)
   },
+  getApiKeysByExchange: (state) => (exchange) => state.apiKeys.filter(value => value.exchange === exchange),
   getRestUrlByExchange: (state) => (exchange) => {
     return state.apiKeys[exchange]["rest"];
   },
@@ -80,17 +79,6 @@ const getters = {
       return { instrument, lastPrice: 0, markPrice: 0 };
     }
   },
-  apiLoaded: (state) => (exchange) => {
-    try {
-      return "label" in state.apiKeys[exchange][0] &&
-        state.apiKeys[exchange][0].label.length > 0
-        ? true
-        : false;
-    } catch (err) {
-      return false;
-    }
-  },
-  cancelOrder: () => state.cancelOrder,
   getOpenPositionsByExchange: (state) => (exchange) => {
     return state.openPositions[exchange];
   },
@@ -99,27 +87,33 @@ const getters = {
 const actions = {
   loadApiKeys() {
     if (JSON.parse(localStorage.getItem("apiKeys"))) {
-      state.apiKeys = JSON.parse(localStorage.getItem("apiKeys"));
+      let fromStore = JSON.parse(localStorage.getItem("apiKeys"));
+      if (!('version' in fromStore) || !(fromStore["version"] === state.version)) {
+        state.apiKeys = []
+      } else {
+        state.apiKeys = fromStore["apiKeys"]
+      }
     }
   },
   storeApiKeys() {
-    localStorage.setItem("apiKeys", JSON.stringify(state.apiKeys));
+    let toStore = {version: state.version, apiKeys: state.apiKeys}
+    localStorage.setItem("apiKeys", JSON.stringify(toStore));
   },
 };
 
 const mutations = {
   addApiKey(state, data) {
-    data.exchange = data.exchange.toLowerCase();
-    if (!(data.exchange in state.apiKeys)) {
-      state.apiKeys[data.exchange] = [];
+    let index = state.apiKeys.findIndex(value => value.label === data.label)
+    if (index >= 0) {
+      state.apiKeys[index] = data
+      // Because it is an API key mutation rather than adding, the empty key must be removed
+      state.apiKeys = state.apiKeys.filter((value) => value.label !== "");
+    } else {
+      state.apiKeys.push(data);
     }
-
-    state.apiKeys[data.exchange].push(data.keys);
   },
   removeApiKey(state, data) {
-    state.apiKeys[data.exchange] = state.apiKeys[data.exchange].filter(
-      (value) => value.label !== data.keys.label
-    );
+    state.apiKeys = state.apiKeys.filter((value) => value.label !== data.keys.label);
   },
   setOpenOrders(state, data) {
     data.openOrders.forEach((openOrder) => {
@@ -152,7 +146,11 @@ const mutations = {
     }
   },
   setAsset: (state, asset) => (state.asset = asset),
-  setExchange: (state, exchange) => (state.exchange = exchange),
+  setExchange: (state, exchange) => {
+    let exch = state.apiKeys.filter(value => value.label === exchange)
+    state.exchange = exch[0].exchange
+    state.account = exch[0].label
+  },
   setOpenPositions: (state, data) => {
     state.openPositions[data.exchange] = [];
     state.openPositions[data.exchange] = data.result;

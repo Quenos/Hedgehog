@@ -18,7 +18,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 1000,
+    width: 1300,
     height: 1100,
     icon: path.join(__static, 'hedgehog.jpg'),
     webPreferences: {

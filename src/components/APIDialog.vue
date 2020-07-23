@@ -24,12 +24,12 @@
             ></v-text-field>
           </template>
           <template v-slot:item.exchange="{ item }">
-            <v-text-field
+            <v-select
               v-model="item.exchange"
               :rules="exchangeLabelRules"
-              readonly
+              :items="exchanges"
               small
-            ></v-text-field>
+            ></v-select>
           </template>
           <template v-slot:item.apiKey="{ item }">
             <v-text-field
@@ -79,6 +79,7 @@ export default {
   store,
   data() {
     return {
+        exchanges: ["deribit", "binance"],
       dialog: false,
       headers: [
         { text: "Label", value: "label" },
@@ -103,13 +104,10 @@ export default {
   methods: {
     add: () => {
       store.commit("addApiKey", {
+        label: "",
         exchange: store.getters.getExchange,
-        keys: {
-          label: "",
-          exchange: store.getters.getExchange,
-          apiKey: "",
-          apiSecret: ""
-        }
+        apiKey: "",
+        apiSecret: ""
       });
     },
     remove: item => {

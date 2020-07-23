@@ -46,9 +46,18 @@ export default {
             this.$deribitApi.getPositions(asset)
           }
         },
+
+        initExchange () {
+          if (store.getters.getExchange == 'deribit') {
+            console.log('then here')
+            this.$deribitApi.initWs()
+          }
+        }
       },
-      computed: {},
-      created() {},
+      created() {
+        store.dispatch("loadApiKeys")
+      },
+      computed: {}
     });
   },
 };

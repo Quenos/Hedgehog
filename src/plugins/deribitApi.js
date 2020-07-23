@@ -13,9 +13,10 @@ export default {
       },
       methods: {
         initWs() {
-          const apiKeys = store.getters.getApiKeysByExchange("deribit");
-          const key = apiKeys[0]["apiKey"];
-          const secret = apiKeys[0]["apiSecret"];
+          let apiKeys = store.getters.getApiKeys
+          console.log(apiKeys)
+          const key = apiKeys["apiKey"];
+          const secret = apiKeys["apiSecret"];
 
           this.ws = new ReconnectingWebSocket(
             store.getters.getWsUrlByExchange("deribit")
@@ -176,7 +177,7 @@ export default {
                 }
                 break;
               case 207:
-                console.log(data);
+                break;
             }
           }
         },
@@ -338,20 +339,8 @@ export default {
       },
       computed: {
         ...mapGetters(["getApiKeys"]),
-        apiKeysLoaded: () => {
-          let x = store.getters.apiLoaded("deribit");
-          if (x) {
-            this.initWs();
-          }
-          return x;
-        },
       },
-      created() {
-        store.dispatch("loadApiKeys");
-        if (store.getters.apiLoaded("deribit")) {
-          this.initWs();
-        }
-      },
+      created() {},
     });
   },
 };

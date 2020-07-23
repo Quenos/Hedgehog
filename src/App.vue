@@ -21,9 +21,12 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app clipped-left>
+    <v-app-bar app clipped-left height="100px">
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Hedgehog</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-select v-model="activeAccount" :items="accountList" label="Accounts" @change="handleExchangeChange">
+      </v-select>
       <v-spacer></v-spacer>
       <v-btn-toggle mandatory color="primary">
         <v-btn @click="setAsset('BTC-PERPETUAL')" small>
@@ -59,7 +62,7 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder v-if="apiLoaded" />
+      <Ladder v-if="activeAccount != ''" />
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
           <h1>Enter API keys to get started</h1>
@@ -82,6 +85,7 @@ import store from "./store";
 import { mapMutations } from "vuex";
 
 export default {
+  store,
   props: {
     source: String,
   },
@@ -90,12 +94,17 @@ export default {
     APIDialog,
   },
   methods: {
+    handleExchangeChange() {
+      store.commit('setExchange', this.activeAccount)
+      this.$apiAbstraction.initExchange()
+    },
     sendAssetChangeMsg(asset) {
       this.$root.$emit("asset_change", asset);
     },
     ...mapMutations(["setAsset"]),
   },
   data: () => ({
+    activeAccount: "",
     drawer: null,
     lastPriceUp: false,
     lastPriceDn: false,
@@ -113,15 +122,13 @@ export default {
     this.sendAssetChangeMsg("asset_change", "BTC-PERPETUAL");
   },
   computed: {
+    accountList: () => store.getters.getAccounts,
     lastAndMarkPrice() {
       const prices = store.getters.getLastAndMarkPriceByExchangeInstrument(
-        "deribit",
+        store.getters.getExchange,
         store.getters.getAsset
       );
       return {...prices}
-    },
-    apiLoaded() {
-      return store.getters.apiLoaded("deribit");
     },
   },
   watch: {

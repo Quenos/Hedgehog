@@ -36,23 +36,23 @@
               :rules="[rules.number]"
               label="Stop Loss"
             ></v-text-field>
-            <v-combobox
+            <v-select
               v-model="scale"
               :items="scl_items"
               :rules="[rules.required]"
               label="Scale"
-            ></v-combobox>
+            ></v-select>
             <v-text-field
               v-model="scale_coefficient"
               :rules="[rules.required]"
               label="Scale Coefficient"
             ></v-text-field>
-            <v-combobox
+            <v-select
               v-model="time_in_force"
               :items="tif_items"
               :rules="[rules.required]"
               label="Time in Force"
-            ></v-combobox>
+            ></v-select>
           </v-col>
         </v-row>
       </v-form>
