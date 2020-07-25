@@ -170,6 +170,7 @@ const mutations = {
     console.log(data)
     state.openPositions[data.exchange] = [];
     if (data.result.length) {
+      console.log(data.result)
       state.openPositions[data.exchange] = data.result;
     }
     console.log(state.openPositions)

@@ -115,7 +115,6 @@ export default {
                   }
                 });
                 if (a.length) {
-                  console.log('set_open_order')
                   store.commit("setOpenOrders", {
                     exchange: "deribit",
                     openOrders: a,
@@ -123,25 +122,7 @@ export default {
                 }
                 break;
               case 983: // private/get_positions
-                if (data.result.length === 0) {
-                  a.push({
-                    symbol: "",
-                    side: "",
-                    size: "",
-                    position_value: "",
-                    entry_price: "",
-                    liq_price: "",
-                    position_margin: "",
-                    leverage: "",
-                    unrealised_pnl_last: "",
-                    realised_pnl: "",
-                    daily_total: "",
-                  });
-                  store.commit("setOpenPositions", {
-                    exchange: "deribit",
-                    result: a,
-                  });
-                } else {
+                if (data.result.length) {
                   data.result.forEach((value) => {
                     if (value["direction"] !== "zero") {
                       a.push({
