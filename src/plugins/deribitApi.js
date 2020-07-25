@@ -10,17 +10,20 @@ export default {
       store,
       data: {
         ws: null,
+        getPositionsInterval: null,
       },
       methods: {
         initWs() {
-          let apiKeys = store.getters.getApiKeys
-          console.log(apiKeys)
+          let apiKeys = store.getters.getApiKeys;
           const key = apiKeys["apiKey"];
           const secret = apiKeys["apiSecret"];
 
           this.ws = new ReconnectingWebSocket(
             store.getters.getWsUrlByExchange("deribit")
           );
+          this.ws.onerror = (err) => {
+            console.log(err);
+          };
           this.ws.onopen = () => {
             const timestamp = Date.now();
             const stringToSign = timestamp + "\n" + "Nonce" + "\n" + "";
@@ -40,23 +43,6 @@ export default {
                 },
               })
             );
-            setTimeout(() => {
-              let msg = {
-                jsonrpc: "2.0",
-                method: "private/subscribe",
-                id: 42,
-                params: {
-                  channels: [
-                    "user.orders.BTC-PERPETUAL.100ms",
-                    "user.orders.ETH-PERPETUAL.100ms",
-                    "ticker.BTC-PERPETUAL.100ms",
-                    "ticker.ETH-PERPETUAL.100ms",
-                  ],
-                },
-              };
-              this.ws.send(JSON.stringify(msg));
-            }, 500);
-
             let msg = {
               jsonrpc: "2.0",
               method: "public/set_heartbeat",
@@ -65,15 +51,13 @@ export default {
                 interval: 60,
               },
             };
-            this.ws.send(JSON.stringify(msg));
-
-            this.getOpenOrders(store.getters.getAsset.substring(0, 3));
+            setTimeout(() => this.ws.send(JSON.stringify(msg)), 500);
+            this.getAssets();
 
             this.ws.onmessage = (e) => {
               let data = JSON.parse(e.data);
               this.handleOnMessage(data);
             };
-            setInterval(() => this.getPositions(), 5 * 1000);
           };
         },
         sendHeartbeat() {
@@ -90,50 +74,55 @@ export default {
             this.ws.send(JSON.stringify(msg));
           }
         },
+        startApi() {
+          this.getOpenOrders(store.getters.getAsset.substring(0, 3));
+          this.getPositionsInterval = setInterval(
+            () => this.getPositions(),
+            5 * 1000
+          );
+        },
+        closeApi() {
+          clearInterval(this.getPositionsInterval);
+          this.ws.close();
+        },
         handleOnMessage(data) {
           if ("method" in data && data.method === "heartbeat") {
             this.sendHeartbeat();
           } else if ("params" in data) {
-            switch (data.params.channel) {
-              case "user.orders.BTC-PERPETUAL.100ms":
-                store.commit("setOpenOrders", {
-                  exchange: "deribit",
-                  openOrders: data.params.data,
-                });
-                break;
-              case "user.orders.ETH-PERPETUAL.100ms":
-                store.commit("setOpenOrders", {
-                  exchange: "deribit",
-                  openOrders: data.params.data,
-                });
-                break;
-              case "ticker.BTC-PERPETUAL.100ms":
-                store.commit("setLastAndMarkPrice", {
-                  exchange: "deribit",
-                  instrument: "BTC-PERPETUAL",
-                  lastPrice: data.params.data.last_price,
-                  markPrice: data.params.data.mark_price,
-                });
-                break;
-              case "ticker.ETH-PERPETUAL.100ms":
-                store.commit("setLastAndMarkPrice", {
-                  exchange: "deribit",
-                  instrument: "ETH-PERPETUAL",
-                  lastPrice: data.params.data.last_price,
-                  markPrice: data.params.data.mark_price,
-                });
-                break;
+            if (data.params.channel.substring(0, 11) === "user.orders") {
+              store.commit("setOpenOrders", {
+                exchange: "deribit",
+                openOrders: data.params.data,
+              });
+            }
+
+            if (data.params.channel.substring(0, 6) === "ticker") {
+              store.commit("setLastAndMarkPrice", {
+                exchange: "deribit",
+                instrument: data.params.data.instrument_name,
+                lastPrice: data.params.data.last_price,
+                markPrice: data.params.data.mark_price,
+              });
             }
           } else if ("id" in data) {
             let a = [];
             switch (data.id) {
-              case 676:
-                store.commit("setOpenOrders", {
-                  exchange: "deribit",
-                  openOrders: data.result,
+              case 676: // private/get_open_orders_by_currency
+                a = [];
+                data.result.forEach((value) => {
+                  if (value["instrument_name"] === store.getters.getAsset) {
+                    a.push(value["instrument_name"]);
+                  }
                 });
+                if (a.length) {
+                  console.log('set_open_order')
+                  store.commit("setOpenOrders", {
+                    exchange: "deribit",
+                    openOrders: a,
+                  });
+                }
                 break;
-              case 983:
+              case 983: // private/get_positions
                 if (data.result.length === 0) {
                   a.push({
                     symbol: "",
@@ -176,9 +165,74 @@ export default {
                   });
                 }
                 break;
-              case 207:
+              case 207: // private/buy and private/sell
+                break;
+              case 1012: // public/get_instruments
+                a = [];
+                data.result.forEach((value) => {
+                  a.push(value["instrument_name"]);
+                });
+                store.commit("setAssets", a.reverse());
+                // eslint-disable-next-line
+                let userOrders = a.map((value) => `user.orders.${value}.100ms`);
+                this.ws.send(
+                  JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "private/subscribe",
+                    id: 42,
+                    params: {
+                      channels: userOrders,
+                    },
+                  })
+                );
+                // eslint-disable-next-line
+                let ticker = a.map((value) => `ticker.${value}.100ms`);
+                this.ws.send(
+                  JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "private/subscribe",
+                    id: 42,
+                    params: {
+                      channels: ticker,
+                    },
+                  })
+                );
                 break;
             }
+          } else {
+            console.log(data);
+          }
+        },
+        getAssets() {
+          let msg = {
+            jsonrpc: "2.0",
+            method: "public/get_instruments",
+            id: 1012,
+            params: {
+              currency: "BTC",
+              kind: "future",
+            },
+          };
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
+          msg = {
+            jsonrpc: "2.0",
+            method: "public/get_instruments",
+            id: 1012,
+            params: {
+              currency: "ETH",
+              kind: "future",
+            },
+          };
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
           }
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {

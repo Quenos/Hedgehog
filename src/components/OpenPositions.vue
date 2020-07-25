@@ -22,39 +22,63 @@
           }}</span>
         </template>
 
-        <template v-slot:item.unrealised_pnl_last="{ item }">
-          <span v-if="item.unrealised_pnl_last < 0" class="error--text">
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+        <template v-slot:item.position_value="{ item }">
+          <span>
+            {{ Number(item.position_value).toFixed(6) }}
           </span>
-          <span v-else-if="item.unrealised_pnl_last > 0" class="success--text">
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+        </template>
+
+        <template v-slot:item.entry_price="{ item }">
+          <span>
+            {{ Number(item.entry_price).toFixed(2) }}
+          </span>
+        </template>
+
+        <template v-slot:item.liq_price="{ item }">
+          <span>
+            {{ Number(item.liq_price).toFixed(2) }}
+          </span>
+        </template>
+
+        <template v-slot:item.position_margin="{ item }">
+          <span>
+            {{ Number(item.position_margin).toFixed(6) }}
+          </span>
+        </template>
+
+        <template v-slot:item.unrealised_pnl_last="{ item }">
+          <span v-if="Number(item.unrealised_pnl_last || 0) < 0" class="error--text">
+            {{ Number(item.unrealised_pnl_last || 0).toFixed(6) }}
+          </span>
+          <span v-else-if="Number(item.unrealised_pnl_last || 0) > 0" class="success--text">
+            {{ Number(item.unrealised_pnl_last || 0).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+            {{ Number(item.unrealised_pnl_last || 0).toFixed(6) }}
           </span>
         </template>
 
         <template v-slot:item.realised_pnl="{ item }">
-          <span v-if="item.realised_pnl < 0" class="error--text">
-            {{ item.realised_pnl.toFixed(6) }}
+          <span v-if="Number(item.realised_pnl) < 0" class="error--text">
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
-          <span v-else-if="item.realised_pnl > 0" class="success--text">
-            {{ item.realised_pnl.toFixed(6) }}
+          <span v-else-if="Number(item.realised_pnl) > 0" class="success--text">
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.realised_pnl.toFixed(6) }}
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
         </template>
 
         <template v-slot:item.daily_total="{ item }">
-          <span v-if="item.daily_total < 0" class="error--text">
-            {{ item.daily_total.toFixed(6) }}
+          <span v-if="Number(item.daily_total) < 0" class="error--text">
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
-          <span v-else-if="item.daily_total > 0" class="success--text">
-            {{ item.daily_total.toFixed(6) }}
+          <span v-else-if="Number(item.daily_total) > 0" class="success--text">
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.daily_total.toFixed(6) }}
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
         </template>
 
@@ -85,39 +109,63 @@
           }}</span>
         </template>
 
-        <template v-slot:item.unrealised_pnl_last="{ item }">
-          <span v-if="item.unrealised_pnl_last < 0" class="error--text">
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+        <template v-slot:item.position_value="{ item }">
+          <span>
+            {{ Number(item.position_value).toFixed(6) }}
           </span>
-          <span v-else-if="item.unrealised_pnl_last > 0" class="success--text">
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+        </template>
+
+        <template v-slot:item.entry_price="{ item }">
+          <span>
+            {{ Number(item.entry_price).toFixed(2) }}
+          </span>
+        </template>
+
+        <template v-slot:item.liq_price="{ item }">
+          <span>
+            {{ Number(item.liq_price).toFixed(2) }}
+          </span>
+        </template>
+
+        <template v-slot:item.position_margin="{ item }">
+          <span>
+            {{ Number(item.position_margin).toFixed(6) }}
+          </span>
+        </template>
+
+        <template v-slot:item.unrealised_pnl_last="{ item }">
+          <span v-if="Number(item.unrealised_pnl_last || 0) < 0" class="error--text">
+            {{ Number(item.unrealised_pnl_last || 0).toFixed(6) }}
+          </span>
+          <span v-else-if="Number(item.unrealised_pnl_last || 0) > 0" class="success--text">
+            {{ Number(item.unrealised_pnl_last || 0).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.unrealised_pnl_last.toFixed(6) }}
+            {{ Number(item.item.unrealised_pnl_last || 0).toFixed(6) }}
           </span>
         </template>
 
         <template v-slot:item.realised_pnl="{ item }">
-          <span v-if="item.realised_pnl < 0" class="error--text">
-            {{ item.realised_pnl.toFixed(6) }}
+          <span v-if="Number(item.realised_pnl) < 0" class="error--text">
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
-          <span v-else-if="item.realised_pnl > 0" class="success--text">
-            {{ item.realised_pnl.toFixed(6) }}
+          <span v-else-if="Number(item.realised_pnl) > 0" class="success--text">
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.realised_pnl.toFixed(6) }}
+            {{ Number(item.realised_pnl).toFixed(6) }}
           </span>
         </template>
 
         <template v-slot:item.daily_total="{ item }">
-          <span v-if="item.daily_total < 0" class="error--text">
-            {{ item.daily_total.toFixed(6) }}
+          <span v-if="Number(item.daily_total) < 0" class="error--text">
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
-          <span v-else-if="item.daily_total > 0" class="success--text">
-            {{ item.daily_total.toFixed(6) }}
+          <span v-else-if="Number(item.daily_total) > 0" class="success--text">
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
           <span v-else>
-            {{ item.daily_total.toFixed(6) }}
+            {{ Number(item.daily_total).toFixed(6) }}
           </span>
         </template>
 

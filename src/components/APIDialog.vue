@@ -123,7 +123,7 @@ export default {
   },
   computed: {
     theApiKeys() {
-      return store.getters.getApiKeysByExchange(store.getters.getExchange);
+      return store.getters.getAllApiKeys;
     },
   }
 };

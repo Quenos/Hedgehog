@@ -28,14 +28,8 @@
       <v-select v-model="activeAccount" :items="accountList" label="Accounts" @change="handleExchangeChange">
       </v-select>
       <v-spacer></v-spacer>
-      <v-btn-toggle mandatory color="primary">
-        <v-btn @click="setAsset('BTC-PERPETUAL')" small>
-          BTC/USD
-        </v-btn>
-        <v-btn @click="setAsset('ETH-PERPETUAL')" small>
-          ETH/USD
-        </v-btn>
-      </v-btn-toggle>
+      <v-select v-if="assets !== []" :items="assets" label="Assets" @change="setAsset">
+      </v-select>
       <v-spacer></v-spacer>
       <span v-if="lastPriceUp" class="success--text"
         >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
@@ -62,7 +56,7 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder v-if="activeAccount != ''" />
+      <Ladder v-if="this.activeAccount != ''" />
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
           <h1>Enter API keys to get started</h1>
@@ -82,7 +76,6 @@
 import Ladder from "./views/Ladder";
 import APIDialog from "@/components/APIDialog";
 import store from "./store";
-import { mapMutations } from "vuex";
 
 export default {
   store,
@@ -98,13 +91,17 @@ export default {
       store.commit('setExchange', this.activeAccount)
       this.$apiAbstraction.initExchange()
     },
-    sendAssetChangeMsg(asset) {
-      this.$root.$emit("asset_change", asset);
+    setAsset(asset) {
+      store.dispatch('changeAsset', asset)
+      if (!this.apiStarted) {
+        this.$apiAbstraction.startApi()
+        this.apiStarted = true
+      }
     },
-    ...mapMutations(["setAsset"]),
   },
   data: () => ({
-    activeAccount: "",
+    apiStarted: false,
+    activeAccount: '',
     drawer: null,
     lastPriceUp: false,
     lastPriceDn: false,
@@ -119,10 +116,11 @@ export default {
     this.$vuetify.theme.themes.dark.error = "#e44b8f";
   },
   mounted() {
-    this.sendAssetChangeMsg("asset_change", "BTC-PERPETUAL");
   },
   computed: {
     accountList: () => store.getters.getAccounts,
+    assets: () => store.getters.getAssets,
+    asset: () => store.getters.getAsset,
     lastAndMarkPrice() {
       const prices = store.getters.getLastAndMarkPriceByExchangeInstrument(
         store.getters.getExchange,

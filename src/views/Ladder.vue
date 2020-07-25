@@ -1,6 +1,6 @@
 <template>
   <div class="ladder">
-    <OpenPositions />
+    <OpenPositions v-if="openPositions" class="mx-1" />
     <v-container fluid>
       <v-form ref="form" v-model="valid" justify="center">
         <v-row justify="center">
@@ -387,6 +387,13 @@ export default {
         this.getAsset
       );
     },
+    openPositions() {
+      let op = store.getters.getOpenPositionsByExchange(
+        store.getters.getExchange
+      )
+      console.log(op)
+      return op.length
+    }
   },
   mounted: function() {
     // setInterval(() => this.openOrders(), 15 * 1000);

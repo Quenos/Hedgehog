@@ -1,6 +1,6 @@
 const state = {
   version: "0.1.1",
-  asset: "BTC-PERPETUAL",
+  asset: "",
   exchange: "deribit",
   account: "",
   apiKeys: [],
@@ -9,10 +9,15 @@ const state = {
       rest: `https://www.deribit.com/api/v2/`,
       ws: `wss://www.deribit.com/ws/api/v2`,
     },
+    binance: {
+      rest: `https://fapi.binance.com/`,
+      ws: `wss://fstream.binance.com`
+    }
   },
   openOrders: {
     deribit: [],
   },
+  assets: [],
   lastAndMarkPrices: {
     deribit: [
       {
@@ -31,11 +36,13 @@ const state = {
 
 const getters = {
   getAsset: () => state.asset,
+  getAssets: (state) => state.assets,
   getExchange: () => state.exchange,
   getAvaialableExchanges: () => {
     return state.availableExchanges;
   },
   getApiKeys: () => state.apiKeys.find(value => value.label == state.account),
+  getAllApiKeys: () => state.apiKeys,
   getAccounts: () => {
     if (state.apiKeys.length === 0) {
       return []
@@ -82,6 +89,7 @@ const getters = {
   getOpenPositionsByExchange: (state) => (exchange) => {
     return state.openPositions[exchange];
   },
+  getActiveAccount: (state) => state.account,
 };
 
 const actions = {
@@ -98,6 +106,12 @@ const actions = {
   storeApiKeys() {
     let toStore = {version: state.version, apiKeys: state.apiKeys}
     localStorage.setItem("apiKeys", JSON.stringify(toStore));
+  },
+  changeAsset( {commit, state }, asset){
+    console.log("here")
+    commit("setOpenPositions", {exchange: state.exchange, result: []})
+    commit("setAsset", asset)
+
   },
 };
 
@@ -145,15 +159,20 @@ const mutations = {
       });
     }
   },
-  setAsset: (state, asset) => (state.asset = asset),
+  setAsset: (state, asset) => state.asset = asset,
+  setAssets: (state, assets) => state.assets = [...state.assets, ...assets],
   setExchange: (state, exchange) => {
     let exch = state.apiKeys.filter(value => value.label === exchange)
     state.exchange = exch[0].exchange
     state.account = exch[0].label
   },
   setOpenPositions: (state, data) => {
+    console.log(data)
     state.openPositions[data.exchange] = [];
-    state.openPositions[data.exchange] = data.result;
+    if (data.result.length) {
+      state.openPositions[data.exchange] = data.result;
+    }
+    console.log(state.openPositions)
   },
 };
 
