@@ -1,7 +1,7 @@
 const state = {
   version: "0.1.1",
   asset: "",
-  exchange: "deribit",
+  exchange: "",
   account: "",
   apiKeys: [],
   urls: {
@@ -11,8 +11,8 @@ const state = {
     },
     binance: {
       rest: `https://fapi.binance.com/`,
-      ws: `wss://fstream.binance.com`
-    }
+      ws: `wss://fstream.binance.com`,
+    },
   },
   openOrders: {
     deribit: [],
@@ -41,15 +41,16 @@ const getters = {
   getAvaialableExchanges: () => {
     return state.availableExchanges;
   },
-  getApiKeys: () => state.apiKeys.find(value => value.label == state.account),
+  getApiKeys: () => state.apiKeys.find((value) => value.label == state.account),
   getAllApiKeys: () => state.apiKeys,
   getAccounts: () => {
     if (state.apiKeys.length === 0) {
-      return []
+      return [];
     }
-    return state.apiKeys.map(value => value.label)
+    return state.apiKeys.map((value) => value.label);
   },
-  getApiKeysByExchange: (state) => (exchange) => state.apiKeys.filter(value => value.exchange === exchange),
+  getApiKeysByExchange: (state) => (exchange) =>
+    state.apiKeys.filter((value) => value.exchange === exchange),
   getRestUrlByExchange: (state) => (exchange) => {
     return state.apiKeys[exchange]["rest"];
   },
@@ -60,13 +61,17 @@ const getters = {
     return state.openOrders[exchange];
   },
   getOpenOrdersByExchangeInstrument: (state) => (exchange, instrument) => {
-    let result = state.openOrders[exchange].filter(
-      (value) => value.instrument_name === instrument
-    );
-    if (result.length !== 0) {
-      return result;
-    } else {
-      return [];
+    try {
+      let result = state.openOrders[exchange].filter(
+        (value) => value.instrument_name === instrument
+      );
+      if (result.length !== 0) {
+        return result;
+      } else {
+        return [];
+      }
+    } catch {
+      return []
     }
   },
   getLastAndMarkPriceByExchange: (state) => (exchange) => {
@@ -76,13 +81,17 @@ const getters = {
     exchange,
     instrument
   ) => {
-    let result = state.lastAndMarkPrices[exchange].filter(
-      (value) => value.instrument === instrument
-    );
+    try {
+      let result = state.lastAndMarkPrices[exchange].filter(
+        (value) => value.instrument === instrument
+      );
 
-    if (result.length !== 0) {
-      return result[0];
-    } else {
+      if (result.length !== 0) {
+        return result[0];
+      } else {
+        return { instrument, lastPrice: 0, markPrice: 0 };
+      }
+    } catch {
       return { instrument, lastPrice: 0, markPrice: 0 };
     }
   },
@@ -96,38 +105,48 @@ const actions = {
   loadApiKeys() {
     if (JSON.parse(localStorage.getItem("apiKeys"))) {
       let fromStore = JSON.parse(localStorage.getItem("apiKeys"));
-      if (!('version' in fromStore) || !(fromStore["version"] === state.version)) {
-        state.apiKeys = []
+      if (
+        !("version" in fromStore) ||
+        !(fromStore["version"] === state.version)
+      ) {
+        state.apiKeys = [];
       } else {
-        state.apiKeys = fromStore["apiKeys"]
+        state.apiKeys = fromStore["apiKeys"];
       }
     }
   },
   storeApiKeys() {
-    let toStore = {version: state.version, apiKeys: state.apiKeys}
+    let toStore = { version: state.version, apiKeys: state.apiKeys };
     localStorage.setItem("apiKeys", JSON.stringify(toStore));
   },
-  changeAsset( {commit, state }, asset){
-    console.log("here")
-    commit("setOpenPositions", {exchange: state.exchange, result: []})
-    commit("setAsset", asset)
-
+  changeAsset({ commit, state }, asset) {
+    commit("setOpenPositions", { exchange: state.exchange, result: [] });
+    commit("setAsset", asset);
+  },
+  /* eslint-disable-next-line */
+  changeExchange({ commit, state }, exchange) {
+    commit("setAsset", "")
+    commit("setAssets", [])
+    let ex = state.apiKeys.filter(value => value.label == exchange)
+    commit("setExchange", {label: exchange, exchange: ex[0].exchange})
   },
 };
 
 const mutations = {
   addApiKey(state, data) {
-    let index = state.apiKeys.findIndex(value => value.label === data.label)
+    let index = state.apiKeys.findIndex(value => value.label === data.label);
     if (index >= 0) {
-      state.apiKeys[index] = data
+      state.apiKeys[index] = data;
       // Because it is an API key mutation rather than adding, the empty key must be removed
-      state.apiKeys = state.apiKeys.filter((value) => value.label !== "");
+      state.apiKeys = state.apiKeys.filter(value => value.label !== "");
     } else {
       state.apiKeys.push(data);
     }
   },
   removeApiKey(state, data) {
-    state.apiKeys = state.apiKeys.filter((value) => value.label !== data.keys.label);
+    state.apiKeys = state.apiKeys.filter(
+      (value) => value.label !== data.keys.label
+    );
   },
   setOpenOrders(state, data) {
     data.openOrders.forEach((openOrder) => {
@@ -159,21 +178,25 @@ const mutations = {
       });
     }
   },
-  setAsset: (state, asset) => state.asset = asset,
-  setAssets: (state, assets) => state.assets = [...state.assets, ...assets],
+  setAsset: (state, asset) => (state.asset = asset),
+  setAssets: (state, assets) => {
+    if (assets.length) {
+      state.assets = [...state.assets, ...assets]
+    } else {
+      state.assets = []
+    }
+  },
   setExchange: (state, exchange) => {
-    let exch = state.apiKeys.filter(value => value.label === exchange)
-    state.exchange = exch[0].exchange
-    state.account = exch[0].label
+    // let exch = state.apiKeys.filter(value => value.label === exchange)
+    console.log(exchange)
+    state.exchange = exchange.exchange;
+    state.account = exchange.label;
   },
   setOpenPositions: (state, data) => {
-    console.log(data)
     state.openPositions[data.exchange] = [];
     if (data.result.length) {
-      console.log(data.result)
       state.openPositions[data.exchange] = data.result;
     }
-    console.log(state.openPositions)
   },
 };
 

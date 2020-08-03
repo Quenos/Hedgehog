@@ -66,7 +66,6 @@ export default {
         }
       },
       created() {
-        store.dispatch("loadApiKeys")
       },
       computed: {}
     });

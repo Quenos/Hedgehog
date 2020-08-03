@@ -25,34 +25,46 @@
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Hedgehog</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-select v-model="activeAccount" :items="accountList" label="Accounts" @change="handleExchangeChange">
+      <v-select
+        v-model="activeAccount"
+        :items="accountList"
+        label="Accounts"
+        @change="handleExchangeChange"
+      >
       </v-select>
       <v-spacer></v-spacer>
-      <v-select v-if="assets !== []" :items="assets" label="Assets" @change="setAsset">
+      <v-select
+        v-if="assets !== []"
+        :items="assets"
+        label="Assets"
+        @change="setAsset"
+      >
       </v-select>
       <v-spacer></v-spacer>
-      <span v-if="lastPriceUp" class="success--text"
-        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
-      </span>
-      <span v-else-if="lastPriceDn" class="error--text"
-        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
-      </span>
-      <span v-else
-        >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
-      </span>
-      {{ divider }}
-      <span v-if="markPriceUp" class="success--text"
-        >Mark:
-        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
-      >
-      <span v-else-if="markPriceDn" class="error--text"
-        >Mark:
-        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
-      >
-      <span v-else
-        >Mark:
-        <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
-      >
+      <div>
+        <span v-if="lastPriceUp" class="success--text"
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+        </span>
+        <span v-else-if="lastPriceDn" class="error--text"
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+        </span>
+        <span v-else
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+        </span>
+        {{ divider }}
+        <span v-if="markPriceUp" class="success--text"
+          >Mark:
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+        >
+        <span v-else-if="markPriceDn" class="error--text"
+          >Mark:
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+        >
+        <span v-else
+          >Mark:
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+        >
+      </div>
     </v-app-bar>
 
     <v-main>
@@ -88,20 +100,22 @@ export default {
   },
   methods: {
     handleExchangeChange() {
-      store.commit('setExchange', this.activeAccount)
+      this.apiStarted = false;
+      this.$apiAbstraction.closeApi();
+      store.dispatch("changeExchange", this.activeAccount);
       this.$apiAbstraction.initExchange()
     },
     setAsset(asset) {
-      store.dispatch('changeAsset', asset)
+      store.dispatch("changeAsset", asset);
       if (!this.apiStarted) {
-        this.$apiAbstraction.startApi()
-        this.apiStarted = true
+        this.$apiAbstraction.startApi();
+        this.apiStarted = true;
       }
     },
   },
   data: () => ({
     apiStarted: false,
-    activeAccount: '',
+    activeAccount: "",
     drawer: null,
     lastPriceUp: false,
     lastPriceDn: false,
@@ -114,8 +128,10 @@ export default {
     this.$vuetify.theme.themes.dark.primary = "#eba51d";
     this.$vuetify.theme.themes.dark.success = "#78b63f";
     this.$vuetify.theme.themes.dark.error = "#e44b8f";
+    this.apiStarted = false;
   },
   mounted() {
+    store.dispatch("loadApiKeys");
   },
   computed: {
     accountList: () => store.getters.getAccounts,
@@ -126,11 +142,11 @@ export default {
         store.getters.getExchange,
         store.getters.getAsset
       );
-      return {...prices}
+      return { ...prices };
     },
   },
   watch: {
-    lastAndMarkPrice (newValue, oldValue) {
+    lastAndMarkPrice(newValue, oldValue) {
       this.lastPriceUp = newValue.lastPrice > oldValue.lastPrice;
       this.lastPriceDn = newValue.lastPrice < oldValue.lastPrice;
       this.markPriceUp = newValue.markPrice > oldValue.markPrice;
@@ -138,7 +154,6 @@ export default {
     },
   },
 };
-
 </script>
 
 <style scoped></style>

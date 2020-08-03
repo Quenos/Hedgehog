@@ -14,6 +14,7 @@ export default {
       },
       methods: {
         initWs() {
+          console.log('init')
           let apiKeys = store.getters.getApiKeys;
           const key = apiKeys["apiKey"];
           const secret = apiKeys["apiSecret"];
@@ -52,6 +53,7 @@ export default {
               },
             };
             setTimeout(() => this.ws.send(JSON.stringify(msg)), 500);
+            console.log('get assets')
             this.getAssets();
 
             this.ws.onmessage = (e) => {

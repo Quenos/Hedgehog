@@ -388,15 +388,17 @@ export default {
       );
     },
     openPositions() {
+      if (this.apiStarted) {
       let op = store.getters.getOpenPositionsByExchange(
         store.getters.getExchange
       )
-      console.log(op)
       return op.length
+      } else {
+        return 0
+      }
     }
   },
   mounted: function() {
-    // setInterval(() => this.openOrders(), 15 * 1000);
   },
   watch: {
     theOpenOrders() {
