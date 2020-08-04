@@ -388,12 +388,12 @@ export default {
       );
     },
     openPositions() {
-      if (this.apiStarted) {
-      let op = store.getters.getOpenPositionsByExchange(
-        store.getters.getExchange
-      )
-      return op.length
-      } else {
+      try {
+        const op = store.getters.getOpenPositionsByExchange(
+          store.getters.getExchange
+        )
+        return op.length
+      } catch {
         return 0
       }
     }

@@ -40,7 +40,7 @@ export default {
           };
         },
         handleOnMessage(data) {
-          // console.log(data)
+          //console.log(data)
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {
         },
@@ -59,6 +59,9 @@ export default {
 
         async getPositions() {
         },
+        async getAssets() {
+          
+        }
       },
       computed: {
         ...mapGetters(["getApiKeys"]),

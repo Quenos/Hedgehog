@@ -34,7 +34,7 @@
       </v-select>
       <v-spacer></v-spacer>
       <v-select
-        v-if="assets !== []"
+        v-model="asset"
         :items="assets"
         label="Assets"
         @change="setAsset"
@@ -68,10 +68,10 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder v-if="this.activeAccount != ''" />
+      <Ladder v-if="asset" />
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
-          <h1>Enter API keys to get started</h1>
+          <h1>Select account and asset to get started</h1>
         </v-col>
       </v-row>
     </v-main>
@@ -136,7 +136,10 @@ export default {
   computed: {
     accountList: () => store.getters.getAccounts,
     assets: () => store.getters.getAssets,
-    asset: () => store.getters.getAsset,
+    asset: {
+      get: () => store.getters.getAsset,
+      set: (asset) => store.commit("setAsset", asset)
+    },
     lastAndMarkPrice() {
       const prices = store.getters.getLastAndMarkPriceByExchangeInstrument(
         store.getters.getExchange,

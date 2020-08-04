@@ -123,7 +123,6 @@ const actions = {
     commit("setOpenPositions", { exchange: state.exchange, result: [] });
     commit("setAsset", asset);
   },
-  /* eslint-disable-next-line */
   changeExchange({ commit, state }, exchange) {
     commit("setAsset", "")
     commit("setAssets", [])
@@ -178,7 +177,9 @@ const mutations = {
       });
     }
   },
-  setAsset: (state, asset) => (state.asset = asset),
+  setAsset: (state, asset) => {
+    state.asset = asset
+  },
   setAssets: (state, assets) => {
     if (assets.length) {
       state.assets = [...state.assets, ...assets]
@@ -188,7 +189,6 @@ const mutations = {
   },
   setExchange: (state, exchange) => {
     // let exch = state.apiKeys.filter(value => value.label === exchange)
-    console.log(exchange)
     state.exchange = exchange.exchange;
     state.account = exchange.label;
   },
