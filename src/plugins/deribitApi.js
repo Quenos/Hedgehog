@@ -154,6 +154,7 @@ export default {
                   a.push(value["instrument_name"]);
                 });
                 store.commit("setAssets", a.reverse());
+                // subscribe to the orders to display open positions
                 // eslint-disable-next-line
                 let userOrders = a.map((value) => `user.orders.${value}.100ms`);
                 this.ws.send(
@@ -166,6 +167,7 @@ export default {
                     },
                   })
                 );
+                // subscribe to the ticker to update last and mark status line
                 // eslint-disable-next-line
                 let ticker = a.map((value) => `ticker.${value}.100ms`);
                 this.ws.send(

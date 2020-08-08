@@ -13,6 +13,7 @@
         <template v-slot:item.size="cell">
           <cell-value
            v-bind="cell"
+           to-fixed="4"
            :has-error="() => cell.item.side === 'sell'"
            :has-success="() => cell.item.side === 'buy'" />
         </template>
@@ -126,7 +127,7 @@ export default {
       );
     },
     full() {
-      return store.getters.getExchange !== "deribit";
+      return store.getters.getExchange !== "deribit" && store.getters.getExchange !== "binance";
     },
   },
   mounted() {},

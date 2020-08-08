@@ -7,13 +7,23 @@ export default {
       data: {},
       methods: {
         startApi() {
-          if (store.getters.getExchange == "deribit") {
-            this.$deribitApi.startApi()
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.startApi()
+              break;
+            case "binance":
+              this.$binanceApi.startApi()
+              break;
           }
         },
         closeApi() {
-          if (store.getters.getExchange == "deribit") {
-            this.$deribitApi.closeApi()
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.closeApi()
+              break;
+            case "binance":
+              this.$binanceApi.closeApi()
+              break;
           }
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {
@@ -52,16 +62,24 @@ export default {
         },
 
         async getPositions(asset) {
-          if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.getPositions(asset)
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.getPositions(asset)
+              break;
+            case "binance":
+              this.$binanceApi.getPositions(asset)
+              break;
           }
         },
 
         initExchange () {
-          if (store.getters.getExchange === 'deribit') {
-            this.$deribitApi.initWs()
-          } else if (store.getters.getExchange === 'binance') {
-            this.$binanceApi.initWs()
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.initWs()
+              break;
+            case "binance":
+              this.$binanceApi.initWs()
+              break;
           }
         }
       },

@@ -24,8 +24,14 @@ const state = {
         instrument: "",
         markPrice: 0,
         lastPrice: 0,
-      },
-    ],
+      }],
+      binance: [
+        {
+          instrument: "",
+          markPrice: 0,
+          lastPrice: 0,
+        },
+      ],
   },
   availableExchanges: ["deribit", "binance"],
   openPositions: {
@@ -52,7 +58,7 @@ const getters = {
   getApiKeysByExchange: (state) => (exchange) =>
     state.apiKeys.filter((value) => value.exchange === exchange),
   getRestUrlByExchange: (state) => (exchange) => {
-    return state.apiKeys[exchange]["rest"];
+    return state.urls[exchange]["rest"];
   },
   getWsUrlByExchange: (state) => (exchange) => {
     return state.urls[exchange]["ws"];
@@ -85,7 +91,6 @@ const getters = {
       let result = state.lastAndMarkPrices[exchange].filter(
         (value) => value.instrument === instrument
       );
-
       if (result.length !== 0) {
         return result[0];
       } else {
@@ -161,11 +166,14 @@ const mutations = {
     });
   },
   setLastAndMarkPrice(state, data) {
+    this.commit("setLastPrice", data)
+    this.commit("setMarkPrice", data)
+  },
+  setLastPrice(state, data) {
     let updated = false;
     state.lastAndMarkPrices[data.exchange].forEach((item) => {
       if (item.instrument === data.instrument) {
         item.lastPrice = data.lastPrice;
-        item.markPrice = data.markPrice;
         updated = true;
       }
     });
@@ -173,6 +181,22 @@ const mutations = {
       state.lastAndMarkPrices[data.exchange].push({
         instrument: data.instrument,
         lastPrice: data.lastPrice,
+        markPrice: 0,
+      });
+    }
+  },
+  setMarkPrice(state, data) {
+    let updated = false;
+    state.lastAndMarkPrices[data.exchange].forEach((item) => {
+      if (item.instrument === data.instrument) {
+        item.markPrice = data.markPrice;
+        updated = true;
+      }
+    });
+    if (!updated) {
+      state.lastAndMarkPrices[data.exchange].push({
+        instrument: data.instrument,
+        lastPrice: 0,
         markPrice: data.markPrice,
       });
     }
@@ -188,7 +212,6 @@ const mutations = {
     }
   },
   setExchange: (state, exchange) => {
-    // let exch = state.apiKeys.filter(value => value.label === exchange)
     state.exchange = exchange.exchange;
     state.account = exchange.label;
   },

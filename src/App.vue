@@ -111,6 +111,9 @@ export default {
         this.$apiAbstraction.startApi();
         this.apiStarted = true;
       }
+      if (store.getters.getExchange === 'binance') {
+        this.$apiAbstraction.getPositions()
+      }
     },
   },
   data: () => ({
