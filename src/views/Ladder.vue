@@ -115,7 +115,7 @@
           </v-col>
         </v-row>
       </div>
-      <div v-show="showOpenOrders">
+      <div v-show="openOrders.length">
         <v-row class="mb-n6 mt-4">
           <v-col sm="8" align="left">
             <span class="font-weight-light mb-n1"
@@ -144,7 +144,7 @@
             <v-data-table
               dense
               :headers="openOrdersHeaders"
-              :items="openOrderItems"
+              :items="openOrders"
               item-key="name"
               class="elevation-1"
               sm="4"
@@ -168,68 +168,26 @@
 import { mapGetters } from "vuex";
 import store from "../store";
 import { generateOrders } from "@/utils/scaledOrderGenerator.js";
-import OpenPositions  from "@/components/OpenPositions"
+import OpenPositions from "@/components/OpenPositions";
 
 export default {
   name: "Ladder",
   components: { OpenPositions },
   methods: {
     async cancelAllOrderItems() {
-      this.openOrderItems.forEach(async (openOrder) => {
-        await this.$apiAbstraction.cancelOrder(openOrder["orderId"]);
+      this.openOrders.forEach(async (openOrder) => {
+        await this.$apiAbstraction.cancelOrder(openOrder["order_id"]);
       });
-      this.openOrders();
     },
     async cancelOrders(direction) {
-      this.openOrderItems.forEach(async (openOrder) => {
-        if (openOrder["orderSide"] === direction) {
-          await this.$apiAbstraction.cancelOrder(openOrder["orderId"]);
+      this.openOrders.forEach(async (openOrder) => {
+        if (openOrder["side"] === direction) {
+          await this.$apiAbstraction.cancelOrder(openOrder["order_id"]);
         }
       });
-      this.openOrders();
     },
     async cancelOrderId(item) {
-      await this.$apiAbstraction.cancelOrder(item["orderId"])
-      this.openOrders();
-    },
-    async openOrders() {
-      if (this.theOpenOrders.length === 0) {
-        this.showOpenOrders = false;
-        this.openOrderItems = [];
-      } else {
-        var longs = 0;
-        var shorts = 0;
-        this.openOrderItems = [];
-        this.theOpenOrders.forEach((openOrder) => {
-          const dateObject = new Date(openOrder["last_update_timestamp"]);
-          var price;
-          if (openOrder["price"] === "market_price") {
-            price = openOrder["stop_price"];
-          } else {
-            price = openOrder["price"];
-          }
-          this.openOrderItems.push({
-            orderId: openOrder["order_id"],
-            orderSide: openOrder["direction"],
-            orderQuantity: openOrder["amount"],
-            orderPrice: price,
-            orderType: openOrder["order_type"],
-            orderTimeInForce:
-              openOrder["time_in_force"] === "good_til_cancelled"
-                ? "Good till Cancelled"
-                : openOrder["time_in_force"] === "immediate_or_cancel"
-                ? "Immediate or Cancel"
-                : "Fill or Kill",
-            orderUpdated: dateObject.toLocaleString(),
-          });
-          openOrder["direction"] === "buy"
-            ? (longs += openOrder["amount"])
-            : (shorts += openOrder["amount"]);
-        });
-        this.openBuyOrders = longs;
-        this.openSellOrders = shorts;
-        this.showOpenOrders = true;
-      }
+      await this.$apiAbstraction.cancelOrder(item["order_id"]);
     },
     isDeribit(value) {
       if (this.deribitExchange) {
@@ -243,14 +201,13 @@ export default {
     },
     async submit_orders() {
       this.showPreview = !this.showPreview;
-      await this.$apiAbstraction.enterOrders( 
+      await this.$apiAbstraction.enterOrders(
         this.getAsset,
         "limit",
         this.post_only,
         this.reduce_only,
         this.orders
       );
-      this.openOrders();
     },
     previewSell() {
       if (this.$refs.form.validate()) {
@@ -322,7 +279,6 @@ export default {
     deribitExchange: true,
     valid: true,
     showPreview: false,
-    showOpenOrders: false,
     openBuyOrders: 0,
     openSellOrders: 0,
     higher_price: "3500",
@@ -337,7 +293,6 @@ export default {
     time_in_force: "Good Till Cancelled",
     tif_items: ["Good Till Cancelled", "Immediate or Cancel", "Fill or Kill"],
     orders: [],
-    openOrderItems: [],
     reduce_only: false,
     post_only: true,
     headers: [
@@ -358,9 +313,9 @@ export default {
         text: "Side",
         align: "start",
         sortable: false,
-        value: "orderSide",
+        value: "side",
       },
-      { text: "Qty", sortable: false, value: "orderQuantity" },
+      { text: "Qty", sortable: false, value: "quantity" },
       { text: "Price", sortable: false, value: "orderPrice" },
       { text: "Type", sortable: false, value: "orderType" },
       { text: "Time in Force", sortable: false, value: "orderTimeInForce" },
@@ -381,29 +336,25 @@ export default {
   }),
   computed: {
     ...mapGetters(["getAsset", "getExchange"]),
-    theOpenOrders() {
-      return store.getters.getOpenOrdersByExchangeInstrument(
-        this.getExchange,
-        this.getAsset
-      );
-    },
     openPositions() {
       try {
         const op = store.getters.getOpenPositionsByExchange(
           store.getters.getExchange
-        )
-        return op.length
+        );
+        return op.length;
       } catch {
-        return 0
+        return 0;
       }
-    }
-  },
-  mounted: function() {
-  },
-  watch: {
-    theOpenOrders() {
-      this.openOrders();
+    },
+    openOrders() {
+      const x = store.getters.getOpenOrdersByExchangeInstrument(
+        store.getters.getExchange,
+        store.getters.getAsset
+      );
+      return x
     },
   },
+  mounted: function() {},
+  watch: {},
 };
 </script>

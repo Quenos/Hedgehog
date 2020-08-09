@@ -114,6 +114,7 @@ export default {
       if (store.getters.getExchange === 'binance') {
         this.$apiAbstraction.getPositions()
       }
+      this.$apiAbstraction.getOpenOrders(asset)
     },
   },
   data: () => ({

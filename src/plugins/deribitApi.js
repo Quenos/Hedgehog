@@ -92,7 +92,26 @@ export default {
             if (data.params.channel.substring(0, 11) === "user.orders") {
               store.commit("setOpenOrders", {
                 exchange: "deribit",
-                openOrders: data.params.data,
+                openOrders: data.params.data.map((item) => {
+                  return {
+                    instrument_name: item["instrument_name"],
+                    side: item["direction"],
+                    order_id: item["order_id"],
+                    order_state: item["order_state"],
+                    quantity: item["amount"],
+                    orderPrice: item["price"],
+                    orderType: item["order_type"],
+                    orderTimeInForce:
+                      item["time_in_force"] === "good_til_cancelled"
+                        ? "Good till cancelled"
+                        : item["time_in_force"] === "immediate_or_cancel"
+                        ? "Immediate or cancel"
+                        : "Fill or Kill",
+                    orderUpdated: new Date(
+                      item["last_update_timestamp"]
+                    ).toLocaleString(),
+                  };
+                }),
               });
             }
 
@@ -108,18 +127,37 @@ export default {
             let a = [];
             switch (data.id) {
               case 676: // private/get_open_orders_by_currency
-                a = [];
-                data.result.forEach((value) => {
-                  if (value["instrument_name"] === store.getters.getAsset) {
-                    a.push(value["instrument_name"]);
+                if (!data.result.length) {
+                  return;
+                }
+                data.result.forEach((item) => {
+                  if (item["instrument_name"] === store.getters.getAsset) {
+                    a.push(item);
                   }
                 });
-                if (a.length) {
-                  store.commit("setOpenOrders", {
-                    exchange: "deribit",
-                    openOrders: a,
-                  });
-                }
+                store.commit("setOpenOrders", {
+                  exchange: "deribit",
+                  openOrders: a.map((item) => {
+                    return {
+                      instrument_name: item["instrument_name"],
+                      side: item["direction"],
+                      order_id: item["order_id"],
+                      order_state: item["order_state"],
+                      quantity: item["amount"],
+                      orderPrice: item["price"],
+                      orderType: item["order_type"],
+                      orderTimeInForce:
+                        item["time_in_force"] === "good_til_cancelled"
+                          ? "Good till cancelled"
+                          : item["time_in_force"] === "immediate_or_cancel"
+                          ? "Immediate or cancel"
+                          : "Fill or Kill",
+                      orderUpdated: new Date(
+                        item["last_update_timestamp"]
+                      ).toLocaleString(),
+                      };
+                  }),
+                });
                 break;
               case 983: // private/get_positions
                 if (data.result.length) {
