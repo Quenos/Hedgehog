@@ -16,8 +16,10 @@ const state = {
   },
   openOrders: {
     deribit: [],
+    binance: [],
   },
   assets: [],
+  tickSizes: [],
   lastAndMarkPrices: {
     deribit: [
       {
@@ -43,6 +45,9 @@ const state = {
 const getters = {
   getAsset: () => state.asset,
   getAssets: (state) => state.assets,
+  getTickSizeBySymbol: (state) => (symbol) =>
+    state.tickSizes.filter(value => value.symbol === symbol),
+  getTickSizes: (state) => state.tickSizes,
   getExchange: () => state.exchange,
   getAvaialableExchanges: () => {
     return state.availableExchanges;
@@ -131,6 +136,7 @@ const actions = {
   changeExchange({ commit, state }, exchange) {
     commit("setAsset", "")
     commit("setAssets", [])
+    commit("setTickSizes", [])
     let ex = state.apiKeys.filter(value => value.label == exchange)
     commit("setExchange", {label: exchange, exchange: ex[0].exchange})
   },
@@ -157,8 +163,11 @@ const mutations = {
       state.openOrders[data.exchange] = state.openOrders[data.exchange].filter(
         (value) => value.order_id !== openOrder.order_id
       );
+      console.log("setOpenOrders")
+      console.log(openOrder)
       if (
         openOrder.order_state === "open" ||
+        openOrder.order_state === "NEW" ||
         openOrder.order_state === "untriggered"
       ) {
         state.openOrders[data.exchange].push(openOrder);
@@ -209,6 +218,13 @@ const mutations = {
       state.assets = [...state.assets, ...assets]
     } else {
       state.assets = []
+    }
+  },
+  setTickSizes: (state, tickSizes) => {
+    if (tickSizes.length) {
+      state.tickSizes = [...state.tickSizes, ...tickSizes]
+    } else {
+      state.tickSizes = []
     }
   },
   setExchange: (state, exchange) => {

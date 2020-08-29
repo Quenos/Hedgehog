@@ -6,6 +6,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import store from "../store";
 import { mapGetters } from "vuex";
 import axios from "axios";
+import { times } from "lodash";
 
 export default {
   install(Vue) {
@@ -45,6 +46,7 @@ export default {
           this.refreshListenKey = true;
           this.getListenKey();
           this.getPositions();
+          this.getOpenOrders();
         },
         closeApi() {
           this.refreshListenKey = false;
@@ -53,12 +55,15 @@ export default {
         },
         createSignedQueryString(queryString) {
           const timestamp = Date.now();
-          const stringToSign = `${queryString}&recvWindow=5000&timestamp=${timestamp}`;
+          const recvWindow = 120000
+          const stringToSign = `${queryString}&recvWindow=${recvWindow}&timestamp=${timestamp}`;
           const signature = hmacSHA256(
             stringToSign,
             this.apiKeys["apiSecret"]
           ).toString();
-          return `${stringToSign}&signature=${signature}`;
+          console.log(signature)
+          console.log(timestamp)
+          return `${queryString}&recvWindow=${recvWindow}&signature=${signature}&timestamp=${timestamp}`;
         },
         handleOnMessage(data) {
           const markPrice = data
@@ -82,25 +87,81 @@ export default {
             });
         },
         handleGetAssets(result) {
-          let a = [];
+          let assets = [];
+          let tickSizes = []
           result.symbols.forEach((value) => {
-            a.push(value["symbol"]);
+            assets.push(value["symbol"]);
+            tickSizes.push({
+              symbol: value["symbol"],
+              tickSize: parseFloat(value.filters[0]["tickSize"])
+            })
           });
-          store.commit("setAssets", a);
+          store.commit("setAssets", assets.sort());
+          store.commit("setTickSizes", tickSizes)
         },
         handleUdsOnMessage(data) {
+          console.log("handelUdsMsg");
           console.log(data);
-          if (data.e === "ORDER_TRADE_UPDATE" || data.a.m !== "ORDER") {
-            return
-          } 
-          // since the user data string doesn't contain all the info needed we make a call to getPositions
-          this.getPositions()
+          if (data.e === "ORDER_TRADE_UPDATE") {
+            const item = data.o;
+            let a = [];
+            a.push({
+              instrument_name: item["s"],
+              side: item["S"].toLowerCase(),
+              order_id: item["i"],
+              order_state: item["x"],
+              quantity: item["q"],
+              orderPrice: item["p"],
+              orderType: item["ot"],
+              orderTimeInForce:
+                item["f"] === "GTC"
+                  ? "Good till cancelled"
+                  : item["timeInForce"] === "IOC"
+                  ? "Immediate or cancel"
+                  : "Fill or Kill",
+              orderUpdated: new Date(item["T"]).toLocaleString(),
+            });
+            store.commit("setOpenOrders", {
+              exchange: "binance",
+              openOrders: a,
+            });
+            return;
+          }
+          if (data.a.m !== "ORDER") {
+            return;
+          }
+          // since the user data stream doesn't contain all the info needed we make a call to getPositions
+          this.getPositions();
         },
         handleOpenOrders(data) {
-          
+          console.log(data);
+          store.commit("setOpenOrders", {
+            exchange: "binance",
+            openOrders: data.map((item) => {
+              return {
+                instrument_name: item["symbol"],
+                side: item["side"].toLowerCase(),
+                order_id: item["orderId"],
+                order_state: item["status"],
+                quantity: item["origQty"],
+                orderPrice: item["price"],
+                orderType: item["type"],
+                orderTimeInForce:
+                  item["timeInForce"] === "GTC"
+                    ? "Good till cancelled"
+                    : item["timeInForce"] === "IOC"
+                    ? "Immediate or cancel"
+                    : "Fill or Kill",
+                orderUpdated: new Date(item["time"]).toLocaleString(),
+              };
+            }),
+          });
+        },
+        handleCancelOrder(data) {},
+        handleEnterOrder(data) {
+          console.log(data);
         },
         handleListenKey(result) {
-          console.log(result);
           this.uds = new ReconnectingWebSocket(
             `${store.getters.getWsUrlByExchange("binance")}/ws/${
               result.listenKey
@@ -114,11 +175,10 @@ export default {
           };
         },
         handlePositions(data) {
-          console.log(data);
           let a = [];
           data.forEach((value) => {
             if (!parseFloat(value["positionAmt"])) {
-              return
+              return;
             }
             a.push({
               symbol: value["symbol"],
@@ -142,11 +202,83 @@ export default {
           });
         },
 
-        async enterOrders(instrument, type, post_only, reduce_only, orders) {},
+        async enterOrders(instrument, type, reduce_only, orders) {
+          orders.forEach(order => {
+            const queryString=`symbol=${instrument}&side=${order.side.toUpperCase()}&type=${type.toUpperCase()}&quantity=${order.quantity}&price=${order.price}&reduceOnly=${reduce_only}&timeInForce=GTC`
+            const signedQuery = this.createSignedQueryString(queryString)
+            const url = `${this.restApiUrl}fapi/v1/order?${signedQuery}`
+            /* fetch is used instead of axios because of bug in latter */
+            const response = fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": 'application/json;charset=UTF-8',
+                      "Access-Control-Allow-Origin": "*",
+                      "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                     }
+            })
 
-        async marketOrder(asset, side, size) {},
+            /* handle stop loss orders */
+            console.log(order.stop_loss)
+            if (order.stop_loss !== ""){
+              const side = order.side.toUpperCase() === "BUY" ? "SELL" : "BUY"
+              const queryString=`symbol=${instrument}&side=${side}&type=STOP_MARKET&stopPrice=${order.stop_loss}&timeInForce=GTC&closePosition=true`
+              const signedQuery = this.createSignedQueryString(queryString)
+              const url = `${this.restApiUrl}fapi/v1/order?${signedQuery}`
+              /* fetch is used instead of axios because of bug in latter */
+              const response = fetch(url, {
+              method: "POST",
+              headers: {"Content-Type": 'application/json;charset=UTF-8',
+                        "Access-Control-Allow-Origin": "*",
+                        "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                       }
+              })  
+            }
 
-        async cancelOrder(order_id) {},
+            /* handle take profit orders */
+            if (order.take_profit !== ""){
+              const side = order.side.toUpperCase() === "BUY" ? "SELL" : "BUY"
+              const queryString=`symbol=${instrument}&side=${side}&type=TAKE_PROFIT_MARKET&stopPrice=${order.take_profit}&timeInForce=GTC&closePosition=true`
+              const signedQuery = this.createSignedQueryString(queryString)
+              const url = `${this.restApiUrl}fapi/v1/order?${signedQuery}`
+              /* fetch is used instead of axios because of bug in latter */
+              const response = fetch(url, {
+              method: "POST",
+              headers: {"Content-Type": 'application/json;charset=UTF-8',
+                        "Access-Control-Allow-Origin": "*",
+                        "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                       }
+              })  
+            }
+          })
+        },
+
+        async marketOrder(asset, side, size) {
+          const queryString=`symbol=${asset}&side=${side.toUpperCase()}&type=MARKET&quantity=${size}`
+          const signedQuery = this.createSignedQueryString(queryString)
+          const url = `${this.restApiUrl}fapi/v1/order?${signedQuery}`
+          /* fetch is used instead of axios because of bug in latter */
+          const response = fetch(url, {
+          method: "POST",
+          headers: {"Content-Type": 'application/json;charset=UTF-8',
+                    "Access-Control-Allow-Origin": "*",
+                    "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                   }
+                  })
+        },
+
+        cancelOrder(order_id) {
+          const queryString = `symbol=${store.getters.getAsset}&orderId=${order_id}`;
+          axios
+            .delete(
+              `${this.restApiUrl}fapi/v1/order?${this.createSignedQueryString(
+                queryString
+              )}`,
+              {
+                headers: { "X-MBX-APIKEY": this.apiKeys["apiKey"] },
+              }
+            )
+            .then((res) => this.handleCancelOrder(res.data))
+            .catch((err) => console.error(err));
+        },
 
         async cancelAllOrders() {},
 

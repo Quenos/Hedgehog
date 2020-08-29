@@ -17,7 +17,7 @@
             ></v-text-field>
             <v-text-field
               v-model="quantity"
-              :rules="[rules.required, rules.number, isDeribit]"
+              :rules="[rules.required, isDeribit]"
               label="Quantity"
             >
             </v-text-field>
@@ -29,7 +29,7 @@
             <v-text-field
               v-model="take_profit"
               label="Take Profit"
-              disabled
+              :disabled="activateTakeProfit() ? false : true"
             ></v-text-field>
             <v-text-field
               v-model="stop_loss"
@@ -174,6 +174,12 @@ export default {
   name: "Ladder",
   components: { OpenPositions },
   methods: {
+    deribitExchange() {
+     return store.getters.getExchange === 'deribit' ? true : false 
+    },
+    activateTakeProfit(){
+      return !this.deribitExchange()
+    },
     async cancelAllOrderItems() {
       this.openOrders.forEach(async (openOrder) => {
         await this.$apiAbstraction.cancelOrder(openOrder["order_id"]);
@@ -190,7 +196,7 @@ export default {
       await this.$apiAbstraction.cancelOrder(item["order_id"]);
     },
     isDeribit(value) {
-      if (this.deribitExchange) {
+      if (this.deribitExchange()) {
         return !(value % 10) || "Quantity must be a multiple of 10.";
       } else {
         return true;
@@ -218,19 +224,23 @@ export default {
         this.lower_price = parseFloat(this.lower_price);
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
-        var orders = generateOrders({
-          amount: this.quantity,
+        const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
+        console.log(typeof(tickSize[0]["tickSize"]))
+        const quotient = 100 / this.quantity 
+        const orders = generateOrders({
+          amount: 100,
           orderCount: this.number_of_orders,
           priceLower: this.lower_price,
           priceUpper: this.higher_price,
           distribution: this.scale,
-          tickSize: 0.5,
+          tickSize: tickSize.length ? tickSize[0]["tickSize"] : 0.5,
           coefficient: this.scale_coefficient,
+          isDeribit: this.deribitExchange()
         });
         orders.forEach((order) => {
           this.orders.push({
             side: "Sell",
-            quantity: order["amount"],
+            quantity: order["amount"] / quotient,
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -248,8 +258,10 @@ export default {
         this.lower_price = parseFloat(this.lower_price);
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
-        var orders = generateOrders({
-          amount: this.quantity,
+        console.log(`is derinbit: ${this.deribitExchange()}`)
+        const quotient = 100 / this.quantity 
+        const orders = generateOrders({
+          amount: 100,
           orderCount: this.number_of_orders,
           priceLower: this.lower_price,
           priceUpper: this.higher_price,
@@ -262,10 +274,11 @@ export default {
           tickSize: 0.5,
           coefficient: this.scale_coefficient,
         });
+        console.log(orders)
         orders.reverse().forEach((order) => {
           this.orders.push({
             side: "Buy",
-            quantity: order["amount"],
+            quantity: order["amount"] / quotient,
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -276,7 +289,6 @@ export default {
     },
   },
   data: () => ({
-    deribitExchange: true,
     valid: true,
     showPreview: false,
     openBuyOrders: 0,

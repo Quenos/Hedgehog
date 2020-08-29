@@ -84,7 +84,8 @@ const generateOrders = ({
   priceUpper,
   distribution,
   tickSize,
-  coefficient
+  coefficient,
+  isDeribit
 }) => {
   if (amount < 2) {
     return new Error("Amount must be greater than or equal to 2");
@@ -95,7 +96,7 @@ const generateOrders = ({
   }
 
   const weights = getAmountDistribution(distribution, orderCount, coefficient);
-  const orderSizes = distributeAmount(amount, weights, true);
+  const orderSizes = distributeAmount(amount, weights, isDeribit);
 
   const priceDiff = priceUpper - priceLower;
   const stepsPerPricePoint = priceDiff / (orderCount - 1);
@@ -144,6 +145,7 @@ const generateOrders = ({
     return new Error("Order is higher than the specified upper price");
   }
 
+  console.log(`orders: ${orders}`)
   return orders;
 };
 

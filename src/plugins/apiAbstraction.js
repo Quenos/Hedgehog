@@ -9,83 +9,103 @@ export default {
         startApi() {
           switch (store.getters.getExchange) {
             case "deribit":
-              this.$deribitApi.startApi()
+              this.$deribitApi.startApi();
               break;
             case "binance":
-              this.$binanceApi.startApi()
+              this.$binanceApi.startApi();
               break;
           }
         },
         closeApi() {
           switch (store.getters.getExchange) {
             case "deribit":
-              this.$deribitApi.closeApi()
+              this.$deribitApi.closeApi();
               break;
             case "binance":
-              this.$binanceApi.closeApi()
+              this.$binanceApi.closeApi();
               break;
           }
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {
-          if (store.getters.getExchange == "deribit") {
-            this.$deribitApi.enterOrders(
-              instrument,
-              type,
-              post_only,
-              reduce_only,
-              orders
-            );
-          }
-        },
-        
-        async marketOrder(symbol, side, size) {
-          if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.marketOrder(symbol, side, size)
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.enterOrders(
+                instrument,
+                type,
+                post_only,
+                reduce_only,
+                orders
+              );
+              break;
+            case "binance":
+              this.$binanceApi.enterOrders(
+                instrument,
+                type,
+                reduce_only,
+                orders
+              );
+              break;
           }
         },
 
+        async marketOrder(symbol, side, size) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.marketOrder(symbol, side, size);
+              break;
+            case "binance":
+              this.$binanceApi.marketOrder(symbol, side, size);
+              break;
+            }
+        },
+
         cancelOrder(order_id) {
-          if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.cancelOrder(order_id);
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.cancelOrder(order_id);
+              break;
+            case "binance":
+              this.$binanceApi.cancelOrder(order_id);
+              break;
           }
         },
 
         async cancelAllOrders() {
           if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.cancelAllOrders()
-        }},
+            this.$deribitApi.cancelAllOrders();
+          }
+        },
 
         async getOpenOrders(asset) {
           if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.getOpenOrders(asset.substring(0, 3))
+            this.$deribitApi.getOpenOrders(asset.substring(0, 3));
           }
         },
 
         async getPositions(asset) {
           switch (store.getters.getExchange) {
             case "deribit":
-              this.$deribitApi.getPositions(asset)
+              this.$deribitApi.getPositions(asset);
               break;
             case "binance":
-              this.$binanceApi.getPositions(asset)
+              this.$binanceApi.getPositions(asset);
               break;
           }
         },
 
-        initExchange () {
+        initExchange() {
           switch (store.getters.getExchange) {
             case "deribit":
-              this.$deribitApi.initWs()
+              this.$deribitApi.initWs();
               break;
             case "binance":
-              this.$binanceApi.initWs()
+              this.$binanceApi.initWs();
               break;
           }
-        }
+        },
       },
-      created() {
-      },
-      computed: {}
+      created() {},
+      computed: {},
     });
   },
 };
