@@ -43,26 +43,26 @@
       <v-spacer></v-spacer>
       <div>
         <span v-if="lastPriceUp" class="success--text"
-          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(precision) }}</strong>
         </span>
         <span v-else-if="lastPriceDn" class="error--text"
-          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(precision) }}</strong>
         </span>
         <span v-else
-          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(2) }}</strong>
+          >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(precision) }}</strong>
         </span>
         {{ divider }}
         <span v-if="markPriceUp" class="success--text"
           >Mark:
-          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(precision) }}</strong></span
         >
         <span v-else-if="markPriceDn" class="error--text"
           >Mark:
-          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(precision) }}</strong></span
         >
         <span v-else
           >Mark:
-          <strong>{{ lastAndMarkPrice.markPrice.toFixed(2) }}</strong></span
+          <strong>{{ lastAndMarkPrice.markPrice.toFixed(precision) }}</strong></span
         >
       </div>
     </v-app-bar>
@@ -138,6 +138,10 @@ export default {
     store.dispatch("loadApiKeys");
   },
   computed: {
+    precision: () => {
+      const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
+      return Math.abs(Math.log10(tickSize[0]["tickSize"]))
+    },
     accountList: () => store.getters.getAccounts,
     assets: () => store.getters.getAssets,
     asset: {
