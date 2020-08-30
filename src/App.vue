@@ -140,7 +140,7 @@ export default {
   computed: {
     precision: () => {
       const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
-      return Math.abs(Math.log10(tickSize[0]["tickSize"]))
+      return tickSize.length ? Math.abs(Math.log10(tickSize[0]["tickSize"])) : 2
     },
     accountList: () => store.getters.getAccounts,
     assets: () => store.getters.getAssets,
