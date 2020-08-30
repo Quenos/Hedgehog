@@ -26,12 +26,11 @@ export default {
           const secret = this.apiKeys["apiSecret"];
           const streamUrl =
             store.getters.getWsUrlByExchange("binance") +
-            `/ws/!markPrice@arr@1s/!ticker@arr`;
+            `/stream?streams=!markPrice@arr@1s/!ticker@arr`;
           this.restApiUrl = store.getters.getRestUrlByExchange("binance");
           this.ws = new ReconnectingWebSocket(streamUrl);
           this.getAssets();
           this.ws.onerror = (err) => {
-            console.log("in the error");
             console.log(err);
           };
           this.ws.onopen = () => {
@@ -55,36 +54,38 @@ export default {
         },
         createSignedQueryString(queryString) {
           const timestamp = Date.now();
-          const recvWindow = 120000
+          const recvWindow = 5000
           const stringToSign = `${queryString}&recvWindow=${recvWindow}&timestamp=${timestamp}`;
           const signature = hmacSHA256(
             stringToSign,
             this.apiKeys["apiSecret"]
           ).toString();
-          console.log(signature)
-          console.log(timestamp)
           return `${queryString}&recvWindow=${recvWindow}&signature=${signature}&timestamp=${timestamp}`;
         },
         handleOnMessage(data) {
-          const markPrice = data
-            .filter((value) => value.e === "markPriceUpdate")
-            .forEach((item) => {
-              store.commit("setMarkPrice", {
-                exchange: "binance",
-                instrument: item.s,
-                markPrice: parseFloat(item.p),
+          try{
+            const markPrice = data.data
+              .filter((value) => value.e === "markPriceUpdate")
+              .forEach((item) => {
+                store.commit("setMarkPrice", {
+                  exchange: "binance",
+                  instrument: item.s,
+                  markPrice: parseFloat(item.p),
+                });
               });
-            });
 
-          const lastPrice = data
-            .filter((value) => value.e === "24hrTicker")
-            .forEach((item) => {
-              store.commit("setLastPrice", {
-                exchange: "binance",
-                instrument: item.s,
-                lastPrice: parseFloat(item.c),
+            const lastPrice = data.data
+              .filter((value) => value.e === "24hrTicker")
+              .forEach((item) => {
+                store.commit("setLastPrice", {
+                  exchange: "binance",
+                  instrument: item.s,
+                  lastPrice: parseFloat(item.c),
+                });
               });
-            });
+            } catch {
+              console.log(data)
+            }
         },
         handleGetAssets(result) {
           let assets = [];
@@ -93,15 +94,14 @@ export default {
             assets.push(value["symbol"]);
             tickSizes.push({
               symbol: value["symbol"],
-              tickSize: parseFloat(value.filters[0]["tickSize"])
+              tickSize: parseFloat(value.filters[0]["tickSize"]),
+              minStepSize: parseFloat(value.filters[1]["stepSize"])
             })
           });
           store.commit("setAssets", assets.sort());
           store.commit("setTickSizes", tickSizes)
         },
         handleUdsOnMessage(data) {
-          console.log("handelUdsMsg");
-          console.log(data);
           if (data.e === "ORDER_TRADE_UPDATE") {
             const item = data.o;
             let a = [];
@@ -134,7 +134,6 @@ export default {
           this.getPositions();
         },
         handleOpenOrders(data) {
-          console.log(data);
           store.commit("setOpenOrders", {
             exchange: "binance",
             openOrders: data.map((item) => {
@@ -158,9 +157,7 @@ export default {
           });
         },
         handleCancelOrder(data) {},
-        handleEnterOrder(data) {
-          console.log(data);
-        },
+        handleEnterOrder(data) {},
         handleListenKey(result) {
           this.uds = new ReconnectingWebSocket(
             `${store.getters.getWsUrlByExchange("binance")}/ws/${
@@ -204,6 +201,10 @@ export default {
 
         async enterOrders(instrument, type, reduce_only, orders) {
           orders.forEach(order => {
+            console.log(order.quantity)
+            if (parseFloat(order.quantity) === 0) {
+              return
+            }
             const queryString=`symbol=${instrument}&side=${order.side.toUpperCase()}&type=${type.toUpperCase()}&quantity=${order.quantity}&price=${order.price}&reduceOnly=${reduce_only}&timeInForce=GTC`
             const signedQuery = this.createSignedQueryString(queryString)
             const url = `${this.restApiUrl}fapi/v1/order?${signedQuery}`
@@ -217,7 +218,6 @@ export default {
             })
 
             /* handle stop loss orders */
-            console.log(order.stop_loss)
             if (order.stop_loss !== ""){
               const side = order.side.toUpperCase() === "BUY" ? "SELL" : "BUY"
               const queryString=`symbol=${instrument}&side=${side}&type=STOP_MARKET&stopPrice=${order.stop_loss}&timeInForce=GTC&closePosition=true`

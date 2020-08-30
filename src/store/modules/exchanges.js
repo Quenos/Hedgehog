@@ -11,7 +11,7 @@ const state = {
     },
     binance: {
       rest: `https://fapi.binance.com/`,
-      ws: `wss://fstream.binance.com`,
+      ws: `wss://fstream3.binance.com`,
     },
   },
   openOrders: {
@@ -163,8 +163,6 @@ const mutations = {
       state.openOrders[data.exchange] = state.openOrders[data.exchange].filter(
         (value) => value.order_id !== openOrder.order_id
       );
-      console.log("setOpenOrders")
-      console.log(openOrder)
       if (
         openOrder.order_state === "open" ||
         openOrder.order_state === "NEW" ||

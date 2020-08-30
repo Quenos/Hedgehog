@@ -225,7 +225,6 @@ export default {
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
         const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
-        console.log(typeof(tickSize[0]["tickSize"]))
         const quotient = 100 / this.quantity 
         const orders = generateOrders({
           amount: 100,
@@ -240,7 +239,7 @@ export default {
         orders.forEach((order) => {
           this.orders.push({
             side: "Sell",
-            quantity: order["amount"] / quotient,
+            quantity: (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -258,7 +257,7 @@ export default {
         this.lower_price = parseFloat(this.lower_price);
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
-        console.log(`is derinbit: ${this.deribitExchange()}`)
+        const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
         const quotient = 100 / this.quantity 
         const orders = generateOrders({
           amount: 100,
@@ -271,14 +270,13 @@ export default {
               : this.scale === "Increasing"
               ? "Decreasing"
               : "Increasing",
-          tickSize: 0.5,
+          tickSize: tickSize.length ? tickSize[0]["tickSize"] : 0.5,
           coefficient: this.scale_coefficient,
         });
-        console.log(orders)
         orders.reverse().forEach((order) => {
           this.orders.push({
             side: "Buy",
-            quantity: order["amount"] / quotient,
+            quantity: (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -293,11 +291,11 @@ export default {
     showPreview: false,
     openBuyOrders: 0,
     openSellOrders: 0,
-    higher_price: "3500",
-    lower_price: "3000",
-    quantity: "3000",
-    number_of_orders: "10",
-    take_profit: null,
+    higher_price: "",
+    lower_price: "",
+    quantity: "",
+    number_of_orders: "",
+    take_profit: "",
     stop_loss: "",
     scale: "Flat",
     scl_items: ["Flat", "Increasing", "Decreasing"],
@@ -359,11 +357,23 @@ export default {
       }
     },
     openOrders() {
-      const x = store.getters.getOpenOrdersByExchangeInstrument(
+      const open_orders = store.getters.getOpenOrdersByExchangeInstrument(
         store.getters.getExchange,
         store.getters.getAsset
       );
-      return x
+      this.openBuyOrders = 0
+      this.openSellOrders = 0
+      open_orders.forEach(openOrder => {
+        if (openOrder.orderType === "LIMIT" && openOrder.side === "buy") {
+          this.openBuyOrders += parseFloat(openOrder.quantity)
+        } 
+        if (openOrder.orderType === "LIMIT" && openOrder.side === "sell") {
+          this.openSellOrders += parseFloat(openOrder.quantity)
+        } 
+      })
+      this.openSellOrders = this.openSellOrders.toFixed(4)
+      this.openBuyOrders = this.openBuyOrders.toFixed(4)
+      return open_orders
     },
   },
   mounted: function() {},

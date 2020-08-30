@@ -145,7 +145,6 @@ const generateOrders = ({
     return new Error("Order is higher than the specified upper price");
   }
 
-  console.log(`orders: ${orders}`)
   return orders;
 };
 
