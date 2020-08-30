@@ -260,7 +260,7 @@ export default {
         const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
         const quotient = 100 / this.quantity 
         const orders = generateOrders({
-          amount: 100,
+          amount: this.deribitExchange() ? this.quantity : 100,
           orderCount: this.number_of_orders,
           priceLower: this.lower_price,
           priceUpper: this.higher_price,
@@ -272,11 +272,12 @@ export default {
               : "Increasing",
           tickSize: tickSize.length ? tickSize[0]["tickSize"] : 0.5,
           coefficient: this.scale_coefficient,
+          isDeribit: this.deribitExchange(),
         });
         orders.reverse().forEach((order) => {
           this.orders.push({
             side: "Buy",
-            quantity: (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
+            quantity: this.deribitExchange() ? order["amount"] : (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -364,10 +365,10 @@ export default {
       this.openBuyOrders = 0
       this.openSellOrders = 0
       open_orders.forEach(openOrder => {
-        if (openOrder.orderType === "LIMIT" && openOrder.side === "buy") {
+        if (openOrder.orderType.toUpperCase() === "LIMIT" && openOrder.side.toUpperCase() === "BUY") {
           this.openBuyOrders += parseFloat(openOrder.quantity)
         } 
-        if (openOrder.orderType === "LIMIT" && openOrder.side === "sell") {
+        if (openOrder.orderType.toUpperCase() === "LIMIT" && openOrder.side.toUpperCase() === "SELL") {
           this.openSellOrders += parseFloat(openOrder.quantity)
         } 
       })

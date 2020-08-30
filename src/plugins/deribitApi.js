@@ -125,6 +125,7 @@ export default {
             }
           } else if ("id" in data) {
             let a = [];
+            let tickSizes = []
             switch (data.id) {
               case 676: // private/get_open_orders_by_currency
                 if (!data.result.length) {
@@ -188,10 +189,18 @@ export default {
                 break;
               case 1012: // public/get_instruments
                 a = [];
+                tickSizes = [];
                 data.result.forEach((value) => {
                   a.push(value["instrument_name"]);
+                  tickSizes.push({
+                    symbol: value["instrument_name"],
+                    tickSize: 0.5,
+                    minStepSize: 10
+                  })
                 });
                 store.commit("setAssets", a.reverse());
+                store.commit("setTickSizes", tickSizes)
+
                 // subscribe to the orders to display open positions
                 // eslint-disable-next-line
                 let userOrders = a.map((value) => `user.orders.${value}.100ms`);
