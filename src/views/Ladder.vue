@@ -33,7 +33,6 @@
             ></v-text-field>
             <v-text-field
               v-model="stop_loss"
-              :rules="[rules.number]"
               label="Stop Loss"
             ></v-text-field>
             <v-select
@@ -225,9 +224,9 @@ export default {
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
         const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
-        const quotient = 100 / this.quantity 
+        const quotient = 100000 / this.quantity 
         const orders = generateOrders({
-          amount: 100,
+          amount: this.deribitExchange() ? this.quantity : 100000,
           orderCount: this.number_of_orders,
           priceLower: this.lower_price,
           priceUpper: this.higher_price,
@@ -239,7 +238,7 @@ export default {
         orders.forEach((order) => {
           this.orders.push({
             side: "Sell",
-            quantity: (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
+            quantity: this.deribitExchange() ? order["amount"] : (order["amount"] / quotient).toFixed(Math.abs(Math.log10(tickSize[0]["minStepSize"]))),
             price: order["price"],
             take_profit: this.take_profit,
             stop_loss: this.stop_loss,
@@ -258,9 +257,9 @@ export default {
         this.higher_price = parseFloat(this.higher_price);
         this.scale_coefficient = parseFloat(this.scale_coefficient);
         const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
-        const quotient = 100 / this.quantity 
+        const quotient = 100000 / this.quantity 
         const orders = generateOrders({
-          amount: this.deribitExchange() ? this.quantity : 100,
+          amount: this.deribitExchange() ? this.quantity : 100000,
           orderCount: this.number_of_orders,
           priceLower: this.lower_price,
           priceUpper: this.higher_price,

@@ -77,7 +77,7 @@ const getters = {
         (value) => value.instrument_name === instrument
       );
       if (result.length !== 0) {
-        return result.sort((a, b) => a["orderPrice"] - b["orderPrice"]);
+        return result;
       } else {
         return [];
       }
