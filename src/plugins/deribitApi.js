@@ -228,6 +228,9 @@ export default {
                   })
                 );
                 break;
+              case 1293: // stoplossOrder
+                console.log(data)
+                break;
             }
           } else {
             console.log(data);
@@ -337,7 +340,7 @@ export default {
         async marketOrder(asset, side, size) {
           let msg = {
             jsonrpc: "2.0",
-            method: `private/${side}`,
+            method: `private/${side.toLowerCase()}`,
             id: 207,
             params: {
               instrument_name: asset,
@@ -345,6 +348,52 @@ export default {
               type: "market",
             },
           };
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
+        },
+
+        async takeProfitOrder(asset, side, price, size) {
+          let msg = {
+            jsonrpc: "2.0",
+            method: side.toLowerCase(),
+            id: 201,
+            params: {
+              instrument_name: asset,
+              amount: size,
+              type: "limit",
+              price: price,
+              time_in_force: "Good Till Cancelled",
+              post_only: true,
+              reduce_only: true,
+            },
+          };
+          try {
+            this.ws.send(JSON.stringify(msg));
+          } catch (err) {
+            this.initWs();
+            this.ws.send(JSON.stringify(msg));
+          }
+        },
+
+        async stoplossOrder(asset, side, price, size) {
+          let msg = {
+            jsonrpc: "2.0",
+            method: `private/${side.toLowerCase()}`,
+            id: 1293,
+            params: {
+              instrument_name: asset,
+              amount: size,
+              type: "stop_market",
+              price: price,
+              stop_price: price,
+              trigger: "mark_price",
+              time_in_force: "good_til_cancelled"
+            }
+          }      
           try {
             this.ws.send(JSON.stringify(msg));
           } catch (err) {

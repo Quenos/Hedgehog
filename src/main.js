@@ -8,11 +8,15 @@ Vue.config.productionTip = false;
 
 import deribitApi from "./plugins/deribitApi";
 import binanceApi from "./plugins/binanceApi";
+import bybitApi from "./plugins/bybitApi";
 import apiAbstraction from "./plugins/apiAbstraction";
+import Notifications from 'vue-notification';
 
 Vue.use(deribitApi);
 Vue.use(binanceApi);
+Vue.use(bybitApi);
 Vue.use(apiAbstraction)
+Vue.use(Notifications)
 
 new Vue({
   router,

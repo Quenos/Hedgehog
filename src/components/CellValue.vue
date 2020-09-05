@@ -1,6 +1,6 @@
 <template>
   <span :class="cellClass"
-         v-text="typeof value === 'number' ? value.toFixed(toFixed || 2) : value" />
+         v-text="typeof value === 'number' ? value.toFixed(toFixed || 4) : value" />
 </template>
 <script>
   export default {

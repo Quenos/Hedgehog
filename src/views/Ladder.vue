@@ -26,15 +26,6 @@
               :rules="[rules.required, rules.number_int]"
               label="Number of Orders"
             ></v-text-field>
-            <v-text-field
-              v-model="take_profit"
-              label="Take Profit"
-              :disabled="activateTakeProfit() ? false : true"
-            ></v-text-field>
-            <v-text-field
-              v-model="stop_loss"
-              label="Stop Loss"
-            ></v-text-field>
             <v-select
               v-model="scale"
               :items="scl_items"
@@ -46,12 +37,6 @@
               :rules="[rules.required]"
               label="Scale Coefficient"
             ></v-text-field>
-            <v-select
-              v-model="time_in_force"
-              :items="tif_items"
-              :rules="[rules.required]"
-              label="Time in Force"
-            ></v-select>
           </v-col>
         </v-row>
       </v-form>
@@ -297,7 +282,7 @@ export default {
     number_of_orders: "",
     take_profit: "",
     stop_loss: "",
-    scale: "Flat",
+    scale: "Increasing",
     scl_items: ["Flat", "Increasing", "Decreasing"],
     scale_coefficient: "10",
     time_in_force: "Good Till Cancelled",
@@ -313,7 +298,7 @@ export default {
         value: "side",
       },
       { text: "Qty", sortable: false, value: "quantity" },
-      { text: "Price", sortable: false, value: "price" },
+      { text: "Price", sortable: true, value: "price" },
       { text: "Take Profit", sortable: false, value: "take_profit" },
       { text: "Stop Loss", sortable: false, value: "stop_loss" },
       { text: "Time in Force", sortable: false, value: "time_in_force" },
@@ -326,7 +311,7 @@ export default {
         value: "side",
       },
       { text: "Qty", sortable: false, value: "quantity" },
-      { text: "Price", sortable: false, value: "orderPrice" },
+      { text: "Price", sortable: true, value: "orderPrice" },
       { text: "Type", sortable: false, value: "orderType" },
       { text: "Time in Force", sortable: false, value: "orderTimeInForce" },
       { text: "Updated", sortable: false, value: "orderUpdated" },
@@ -335,11 +320,11 @@ export default {
     rules: {
       required: (value) => !!value || "Required.",
       number: (value) => {
-        const pattern = /(^[1-9][0-9]*([.][0-9]*)?$)|^$/;
+        const pattern = /(^[0-9][0-9]*([.][0-9]*)?$)|^$/;
         return pattern.test(value) || "Input must be numeric.";
       },
       number_int: (value) => {
-        const pattern = /^[1-9][0-9]*$/;
+        const pattern = /^[0-9][0-9]*$/;
         return pattern.test(value) || "Input cannot have a fraction.";
       },
     },

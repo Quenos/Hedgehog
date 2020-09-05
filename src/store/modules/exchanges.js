@@ -13,10 +13,15 @@ const state = {
       rest: `https://fapi.binance.com/`,
       ws: `wss://fstream3.binance.com`,
     },
+    bybit: {
+      rest: `https://api.bybit.com`,
+      ws: `wss://stream.bybit.com/realtime`,
+    },
   },
   openOrders: {
     deribit: [],
     binance: [],
+    bybit: [],
   },
   assets: [],
   tickSizes: [],
@@ -34,11 +39,19 @@ const state = {
           lastPrice: 0,
         },
       ],
+      bybit: [
+        {
+          instrument: "",
+          markPrice: 0,
+          lastPrice: 0,
+        },
+      ],
   },
-  availableExchanges: ["deribit", "binance"],
+  availableExchanges: ["deribit", "binance", "bybit"],
   openPositions: {
     deribit: [],
     binance: [],
+    bybit: [],
   },
 };
 
@@ -50,6 +63,7 @@ const getters = {
   getTickSizes: (state) => state.tickSizes,
   getExchange: () => state.exchange,
   getAvaialableExchanges: () => {
+    console.log(state.availableExchanges)
     return state.availableExchanges;
   },
   getApiKeys: () => state.apiKeys.find((value) => value.label == state.account),
@@ -107,6 +121,10 @@ const getters = {
   },
   getOpenPositionsByExchange: (state) => (exchange) => {
     return state.openPositions[exchange];
+  },
+  getOpenPositionBySymbol: (state) => (symbol) => {
+    const openPositions = state.openPositions[state.exchange]
+    return openPositions.filter(position => position.symbol === symbol)[0]
   },
   getActiveAccount: (state) => state.account,
 };

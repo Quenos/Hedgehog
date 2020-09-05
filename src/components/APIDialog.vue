@@ -34,16 +34,12 @@
           <template v-slot:item.apiKey="{ item }">
             <v-text-field
               v-model="item.apiKey"
-              :rules="apiKeyRules"
-              counter="8"
               required
             ></v-text-field>
           </template>
           <template v-slot:item.apiSecret="{ item }">
             <v-text-field
               v-model="item.apiSecret"
-              :rules="privateKeyRules"
-              counter="43"
               required
             ></v-text-field>
           </template>
@@ -79,7 +75,7 @@ export default {
   store,
   data() {
     return {
-        exchanges: ["deribit", "binance"],
+      exchanges: ["deribit", "binance", "bybit"],
       dialog: false,
       headers: [
         { text: "Label", value: "label" },
@@ -87,14 +83,6 @@ export default {
         { text: "Api Key", value: "apiKey" },
         { text: "Api Secret", value: "apiSecret" },
         { text: "Remove", value: "remove" }
-      ],
-      apiKeyRules: [
-        v => !!v || "Api key is required",
-        v => (v && v.length === 8) || "Api key must be 8 characters"
-      ],
-      privateKeyRules: [
-        v => !!v || "Private Key is required",
-        v => (v && v.length === 43) || "Private Key must be 43 characters"
       ],
       accountLabelRules: [v => !!v || "Account Label is required"],
       exchangeLabelRules: [v => !!v || "Exchange Label is required"],

@@ -6,6 +6,19 @@ export default {
       store,
       data: {},
       methods: {
+        initExchange() {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.initWs();
+              break;
+            case "binance":
+              this.$binanceApi.initWs();
+              break;
+            case "bybit":
+              this.$bybitApi.initWs();
+              break;
+          }
+        },
         startApi() {
           switch (store.getters.getExchange) {
             case "deribit":
@@ -13,6 +26,9 @@ export default {
               break;
             case "binance":
               this.$binanceApi.startApi();
+              break;
+            case "bybit":
+              this.$bybitApi.startApi();
               break;
           }
         },
@@ -23,6 +39,9 @@ export default {
               break;
             case "binance":
               this.$binanceApi.closeApi();
+              break;
+            case "bybit":
+              this.$bybitApi.closeApi();
               break;
           }
         },
@@ -45,6 +64,9 @@ export default {
                 orders
               );
               break;
+            case "bybit":
+              this.$bybitApi.enterOrders(instrument, type, reduce_only, orders);
+              break;
           }
         },
 
@@ -56,7 +78,55 @@ export default {
             case "binance":
               this.$binanceApi.marketOrder(symbol, side, size);
               break;
-            }
+            case "bybit":
+              this.$bybitApi.marketOrder(symbol, side, size);
+              break;
+          }
+        },
+
+        async takeProfitOrder(symbol, side, price, size) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.takeProfitOrder(symbol, side, price, size);
+              break;
+            case "binance":
+              this.$binanceApi.takeProfitOrder(symbol, side, price, size);
+              break;
+            case "bybit":
+              this.$bybitApi.takeProfitOrder(symbol, side, price, size);
+              break;
+          }
+        },
+
+        async stoplossOrder(symbol, side, price, size) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$deribitApi.stoplossOrder(symbol, side, price, size);
+              break;
+            case "binance":
+              this.$binanceApi.stoplossOrder(symbol, side, price, size);
+              break;
+            case "bybit":
+              this.$bybitApi.stoplossOrder(symbol, side, price, size);
+              break;
+          }
+        },
+
+        async trailingSLOrder(symbol, side, price, size) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              this.$notify({
+                text: "Deribit has no trailing stop orders",
+                type: "error", 
+              })
+              break;
+            case "binance":
+              this.$binanceApi.trailingSLOrder(symbol, side, price, size);
+              break;
+            case "bybit":
+              this.$bybitApi.trailingSLOrder(symbol, side, price, size);
+              break;
+          }
         },
 
         cancelOrder(order_id) {
@@ -66,6 +136,9 @@ export default {
               break;
             case "binance":
               this.$binanceApi.cancelOrder(order_id);
+              break;
+            case "bybit":
+              this.$bybitApi.cancelOrder(order_id);
               break;
           }
         },
@@ -90,17 +163,8 @@ export default {
             case "binance":
               this.$binanceApi.getPositions(asset);
               break;
-          }
-        },
-
-        initExchange() {
-          switch (store.getters.getExchange) {
-            case "deribit":
-              this.$deribitApi.initWs();
-              break;
-            case "binance":
-              this.$binanceApi.initWs();
-              break;
+            case "bybit":
+              this.$bybitApi.getPositions(asset);
           }
         },
       },

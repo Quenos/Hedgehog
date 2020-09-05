@@ -4,7 +4,7 @@
       <v-data-table
         dense
         align="center"
-        :headers="full ? headers_full : headers_reduced"
+        :headers="headers_full"
         :items="openPositions"
         hide-default-footer>
         <template v-slot:item.symbol="cell">
@@ -34,8 +34,8 @@
             v-bind="cell"
             :has-error="cell => cell < 0"
             :has-success="cell => cell > 0"
-            :to-fixed="6" />
-        </template>
+            :to-fixed="6" />        
+          </template>
         <template v-slot:item.realised_pnl="cell">
           <cell-value 
             v-bind="cell"
@@ -50,6 +50,25 @@
             :has-success="cell => cell> 0"
             :to-fixed="6" />
         </template>
+    <template v-slot:item.trading_stops>
+      <v-dialog
+          v-model="dialog"
+          width="300"
+      >
+        <template v-slot:activator="{ on }">
+          <v-btn
+              center
+              v-on="on"
+              x-small
+              color="primary"
+          >
+            <v-icon small>mdi-xamarin</v-icon>
+          </v-btn>
+        </template>
+
+        <TradingStops v-if="dialog" @close="dialog = false"></TradingStops>
+      </v-dialog>
+    </template>
         <template v-slot:item.market_close="{ item }">
           <v-btn x-small color="primary" @click="marketClose(item)">
             Close
@@ -63,11 +82,14 @@
 <script>
 import store from "../store";
 import CellValue from "./CellValue.vue";
+import TradingStops from "@/components/TradingStops";
+
 export default {
   store,
   name: "OpenPositions",
   components: {
-    CellValue
+    CellValue,
+    TradingStops,
   },
   props: [],
   data() {
@@ -107,11 +129,24 @@ export default {
         },
         { text: "Daily Realized P&L", value: "realised_pnl" },
         { text: "Daily Total (% of Account)", value: "daily_total" },
+        { text: "Stops", value: "trading_stops" },
         { text: "Market close", value: "market_close" },
       ],
     };
   },
   methods: {
+    te(cell){
+      return cell
+    },
+    unrealised_pnl(price, qty, side) {
+    const lastPrice = store.getters.getLastAndMarkPriceByExchangeInstrument
+                          (store.getters.getExchange, store.getters.getAsset).lastPrice  
+    if (side.toLowerCase() === 'buy') {
+        return ((1 / price) - (1 / parseFloat(lastPrice))) * qty;
+      } else {
+        return ((1 / parseFloat(lastPrice) - (1 / price))) * qty;
+      }
+    },    
     async marketClose(item) {
       await this.$apiAbstraction.marketOrder(
         item.symbol,
@@ -121,14 +156,10 @@ export default {
     },
   },
   computed: {
-    openPositions() {
-      return store.getters.getOpenPositionsByExchange(
-        store.getters.getExchange
-      );
-    },
-    full() {
-      return store.getters.getExchange !== "deribit" && store.getters.getExchange !== "binance";
-    },
+    openPositions: () => store.getters.getOpenPositionsByExchange(store.getters.getExchange),
+    full: () => store.getters.getExchange !== "deribit" && store.getters.getExchange !== "binance",
+    showReduced: () => store.getters.getExchange !== 'bybit',
+    last_price: () => store.getters.getLastAndMarkPriceByExchangeInstrument(store.getters.getExchange, store.getters.getAsset).lastPrice,
   },
   mounted() {},
 };

@@ -2,12 +2,28 @@
   <v-app id="inspire">
     <v-navigation-drawer v-model="drawer" app clipped>
       <v-list dense>
-        <v-list-item link>
+        <v-list-item @click="handleShowLadder">
           <v-list-item-action>
-            <v-icon>mdi-view-dashboard</v-icon>
+            <v-icon>mdi-stairs</v-icon>
           </v-list-item-action>
           <v-list-item-content>
             <v-list-item-title>Ladder</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="handleShowMarket">
+          <v-list-item-action>
+            <v-icon>mdi-storefront</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Market Order</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="handleShowLimit">
+          <v-list-item-action>
+            <v-icon>mdi-arrow-expand-vertical</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Limit Order</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
         <v-list-item link>
@@ -68,12 +84,15 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder v-if="asset" />
+      <Ladder v-if="ladder && asset" />
+      <Market v-else-if="market && asset" />
+      <Limit v-else-if="limit && asset" />
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
           <h1>Select account and asset to get started</h1>
         </v-col>
       </v-row>
+      <notifications position="bottom left" :duration="4000"/>
     </v-main>
 
     <v-footer app>
@@ -86,6 +105,8 @@
 
 <script>
 import Ladder from "./views/Ladder";
+import Market from "./views/Market";
+import Limit from "./views/Limit";
 import APIDialog from "@/components/APIDialog";
 import store from "./store";
 
@@ -96,9 +117,32 @@ export default {
   },
   components: {
     Ladder,
+    Market,
+    Limit,
     APIDialog,
   },
   methods: {
+    handleShowLadder() {
+      if (this.asset !== ""){
+        this.market = false
+        this.limit = false
+        this.ladder = true
+      }
+    },
+    handleShowMarket() {
+      if (this.asset !== ""){
+        this.market = true
+        this.limit = false
+        this.ladder = false
+      }
+    },
+    handleShowLimit() {
+      if (this.asset !== ""){
+        this.market = false
+        this.limit = true
+        this.ladder = false
+      }
+    },
     handleExchangeChange() {
       this.apiStarted = false;
       this.$apiAbstraction.closeApi();
@@ -118,6 +162,9 @@ export default {
     },
   },
   data: () => ({
+    ladder: true,
+    market: false,
+    limit: false,
     apiStarted: false,
     activeAccount: "",
     drawer: null,
@@ -140,7 +187,7 @@ export default {
   computed: {
     precision: () => {
       const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
-      return tickSize.length ? Math.abs(Math.log10(tickSize[0]["tickSize"])) : 2
+      return tickSize.length ? Math.ceil(Math.abs(Math.log10(tickSize[0]["tickSize"]))) : 2
     },
     accountList: () => store.getters.getAccounts,
     assets: () => store.getters.getAssets,
