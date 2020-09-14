@@ -17,11 +17,16 @@ const state = {
       rest: `https://api.bybit.com`,
       ws: `wss://stream.bybit.com/realtime`,
     },
+    ftx: {
+      rest: `https://ftx.com/api`,
+      ws: `wss://ftx.com/ws/`,
+    },
   },
   openOrders: {
     deribit: [],
     binance: [],
     bybit: [],
+    ftx: [],
   },
   assets: [],
   tickSizes: [],
@@ -32,26 +37,34 @@ const state = {
         markPrice: 0,
         lastPrice: 0,
       }],
-      binance: [
-        {
-          instrument: "",
-          markPrice: 0,
-          lastPrice: 0,
-        },
-      ],
-      bybit: [
-        {
-          instrument: "",
-          markPrice: 0,
-          lastPrice: 0,
-        },
-      ],
+    binance: [
+      {
+        instrument: "",
+        markPrice: 0,
+        lastPrice: 0,
+      },
+    ],
+    bybit: [
+      {
+        instrument: "",
+        markPrice: 0,
+        lastPrice: 0,
+      },
+    ],
+    ftx: [
+      {
+        instrument: "",
+        markPrice: 0,
+        lastPrice: 0,
+      },
+    ],
   },
-  availableExchanges: ["deribit", "binance", "bybit"],
+  availableExchanges: ["deribit", "binance", "bybit", "ftx"],
   openPositions: {
     deribit: [],
     binance: [],
     bybit: [],
+    ftx: [],
   },
 };
 
@@ -182,9 +195,9 @@ const mutations = {
         (value) => value.order_id !== openOrder.order_id
       );
       if (
-        openOrder.order_state === "open" ||
-        openOrder.order_state === "NEW" ||
-        openOrder.order_state === "untriggered"
+        openOrder.order_state.toLowerCase() === "open" ||
+        openOrder.order_state.toLowerCase() === "new" ||
+        openOrder.order_state.toLowerCase() === "untriggered"
       ) {
         state.openOrders[data.exchange].push(openOrder);
       }

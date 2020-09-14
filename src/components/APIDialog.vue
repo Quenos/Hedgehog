@@ -75,7 +75,7 @@ export default {
   store,
   data() {
     return {
-      exchanges: ["deribit", "binance", "bybit"],
+      exchanges: ["deribit", "binance", "bybit", "ftx"],
       dialog: false,
       headers: [
         { text: "Label", value: "label" },

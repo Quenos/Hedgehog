@@ -17,7 +17,10 @@ export default {
             case "bybit":
               this.$bybitApi.initWs();
               break;
-          }
+            case "ftx":
+              this.$ftxApi.initWs();
+              break;
+            }
         },
         startApi() {
           switch (store.getters.getExchange) {
@@ -29,6 +32,9 @@ export default {
               break;
             case "bybit":
               this.$bybitApi.startApi();
+              break;
+            case "ftx":
+              this.$ftxApi.startApi();
               break;
           }
         },
@@ -43,7 +49,10 @@ export default {
             case "bybit":
               this.$bybitApi.closeApi();
               break;
-          }
+            case "ftx":
+              this.$ftxApi.closeApi();
+              break;
+            }
         },
         async enterOrders(instrument, type, post_only, reduce_only, orders) {
           switch (store.getters.getExchange) {
@@ -67,6 +76,9 @@ export default {
             case "bybit":
               this.$bybitApi.enterOrders(instrument, type, reduce_only, orders);
               break;
+            case "ftx":
+              this.$ftxApi.enterOrders(instrument, type, reduce_only, orders)
+              break;
           }
         },
 
@@ -80,6 +92,9 @@ export default {
               break;
             case "bybit":
               this.$bybitApi.marketOrder(symbol, side, size);
+              break;
+            case "ftx":
+              this.$ftxApi.marketOrder(symbol, side, size)
               break;
           }
         },
@@ -95,6 +110,9 @@ export default {
             case "bybit":
               this.$bybitApi.takeProfitOrder(symbol, side, price, size);
               break;
+            case "ftx":
+              this.$ftxApi.takeProfitOrder(symbol, side, price, size)
+              break;
           }
         },
 
@@ -109,6 +127,8 @@ export default {
             case "bybit":
               this.$bybitApi.stoplossOrder(symbol, side, price, size);
               break;
+            case "ftx":
+              this.$ftxApi.stoplossOrder(symbol, side, price, size)
           }
         },
 
@@ -126,6 +146,9 @@ export default {
             case "bybit":
               this.$bybitApi.trailingSLOrder(symbol, side, price, size);
               break;
+            case "ftx":
+              this.$ftxApi.trailingSLOrder(symbol, side, price, size)
+              break;
           }
         },
 
@@ -139,6 +162,9 @@ export default {
               break;
             case "bybit":
               this.$bybitApi.cancelOrder(order_id);
+              break;
+            case "ftx":
+              this.$ftxApi.cancelOrder(order_id);
               break;
           }
         },
