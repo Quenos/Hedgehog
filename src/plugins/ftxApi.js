@@ -21,7 +21,7 @@ export default {
       },
       methods: {
         delay(period){
-          setTimeout(() => {}, period)
+          return new Promise(resolve => setTimeout(resolve, period))
         },
         handleError(err){
           this.$notify({
@@ -250,7 +250,7 @@ export default {
           })
         },
         async enterOrders(instrument, type, reduce_only, orders) {
-          orders.forEach(order => {
+          orders.forEach(async (order) => {
             const data = {
               market: store.getters.getAsset,
               side: order.side.toLowerCase(),
@@ -265,7 +265,7 @@ export default {
               .post(`${this.restApiUrl}/orders`, data, {headers: header })
               .then(res => this.handleEnterOrder(res))
               .catch(err => this.handleError(err))
-            this.delay(500)
+            await this.delay(500)
           })
         },
         async marketOrder(asset, side, size) {
@@ -281,7 +281,7 @@ export default {
             .post(`${this.restApiUrl}/orders`, data, {headers: header })
             .then(res => this.handleEnterOrder(res))
             .catch(err => this.handleError(err))
-          this.delay(500)
+          await this.delay(500)
       },
         async takeProfitOrder(symbol, side, price, size){
           // this.cancelConditionalOrder("takeProfit")
@@ -318,7 +318,7 @@ export default {
               .post(`${this.restApiUrl}/conditional_orders`, data, {headers: header })
               .then(res => this.handleTradingStops(res))
               .catch(err => this.handleError(err))
-            this.delay(500)
+            await this.delay(500)
           }
         },
         async trailingSLOrder(symbol, side, price, size){
@@ -340,7 +340,7 @@ export default {
             this.delay(500)
           }
         },
-        cancelConditionalOrder(orderType){
+        async cancelConditionalOrder(orderType){
           return
           const asset = store.getters.getAsset
           const headers = this.getSignedHeader("GET", 
@@ -348,7 +348,7 @@ export default {
           axios
             .get(`${this.restApiUrl}/conditional_orders?market=${asset}&type=${orderType}`
                   , { headers: headers })
-            .then(res => {
+            .then(async (res) => {
               if (res.data.result.length){
               const order_id = res.data.result[0].id
               const headers = this.getSignedHeader("DELETE", `/api/conditional_orders/${order_id}`)
@@ -356,7 +356,7 @@ export default {
                 .delete(`${this.restApiUrl}/conditional_orders/${order_id}`, { headers: headers })
                 .then(res => this.handleCancelOrder(res))
                 .catch(err => this.handleError(err))
-              this.delay(500)  
+              await this.delay(500)  
             }})
             .catch(err => this.handleError(err))
         },
@@ -367,7 +367,7 @@ export default {
             .delete(`${this.restApiUrl}/orders/${order_id}`, { headers: headers })
             .then(res => this.handleCancelOrder(res))
             .catch(err => this.handleError(err))
-          this.delay(500)
+          await this.delay(500)
         },
         async cancelAllOrders() {},
         async getOpenOrders() {

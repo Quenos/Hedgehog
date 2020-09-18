@@ -1,8 +1,10 @@
 const state = {
-  version: "0.1.1",
+  version: "0.1.1", // version of the api save format
   asset: "",
   exchange: "",
   account: "",
+  botExchange: "",
+  botAccount: "",
   apiKeys: [],
   urls: {
     deribit: {
@@ -66,6 +68,11 @@ const state = {
     bybit: [],
     ftx: [],
   },
+  botPositions: {
+    binance: [],
+  },
+  balances: {binance: {}},
+  bba: {binance: {}},  // best bid and ask
 };
 
 const getters = {
@@ -81,11 +88,15 @@ const getters = {
   },
   getApiKeys: () => state.apiKeys.find((value) => value.label == state.account),
   getAllApiKeys: () => state.apiKeys,
-  getAccounts: () => {
+  getAccounts: (state) => (exchange = "") => {
     if (state.apiKeys.length === 0) {
       return [];
     }
-    return state.apiKeys.map((value) => value.label);
+    if (exchange === ""){
+      return state.apiKeys.map((value) => value.label);
+    } else {
+      return state.apiKeys.filter(key => key.exchange.toLowerCase() === exchange.toLowerCase()).map((value) => value.label);
+    }
   },
   getApiKeysByExchange: (state) => (exchange) =>
     state.apiKeys.filter((value) => value.exchange === exchange),
@@ -139,7 +150,16 @@ const getters = {
     const openPositions = state.openPositions[state.exchange]
     return openPositions.filter(position => position.symbol === symbol)[0]
   },
+  getBotPositionBySymbol: (state) => (symbol) => {
+    const botPositions = state.botPositions[state.exchange]
+    return botPositions.filter(position => position.symbol === symbol)[0]
+  },
   getActiveAccount: (state) => state.account,
+  getBalance: (state) => state.balances[state.exchange],
+  getBBA: (state) => {
+    console.log(state.bba)
+    return state.bba[state.exchange]
+  },
 };
 
 const actions = {
@@ -170,6 +190,10 @@ const actions = {
     commit("setTickSizes", [])
     let ex = state.apiKeys.filter(value => value.label == exchange)
     commit("setExchange", {label: exchange, exchange: ex[0].exchange})
+  },
+  changeBotExchange({ commit, state }, exchange) {
+    let ex = state.apiKeys.filter(value => value.label == exchange)
+    commit("setBotExchange", {label: exchange, exchange: ex[0].exchange})
   },
 };
 
@@ -260,11 +284,27 @@ const mutations = {
     state.exchange = exchange.exchange;
     state.account = exchange.label;
   },
+  setBotExchange: (state, exchange) => {
+    state.botExchange = exchange.exchange;
+    state.botAccount = exchange.label;
+  },
   setOpenPositions: (state, data) => {
     state.openPositions[data.exchange] = [];
     if (data.result.length) {
       state.openPositions[data.exchange] = data.result;
     }
+  },
+  setBotPositions: (state, data) => {
+    state.botPositions[data.exchange] = [];
+    if (data.result.length) {
+      state.botPositions[data.exchange] = data.result;
+    }
+  },
+  setBalance: (state, balance) => {
+    state.balances[state.exchange] = balance
+  },
+  setBBA: (state, bba) => {
+    state.bba[state.exchange] = bba
   },
 };
 

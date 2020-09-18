@@ -191,8 +191,43 @@ export default {
               break;
             case "bybit":
               this.$bybitApi.getPositions(asset);
+              break;
           }
         },
+
+        async getWalletBalance() {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              break;
+            case "binance":
+              this.$binanceApi.getWalletBalance();
+              break;
+            case "bybit":
+              break;
+          }
+        },
+        async setLeverage(leverage, coin) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              break;
+            case "binance":
+              this.$binanceApi.setLeverage(leverage, coin);
+              break;
+            case "bybit":
+              break;
+          }
+        },
+        getBBA(symbol) {
+          switch (store.getters.getExchange) {
+            case "deribit":
+              break;
+            case "binance":
+              this.$binanceApi.getBBA(symbol);
+              break;
+            case "bybit":
+              break;
+          }
+        }
       },
       created() {},
       computed: {},

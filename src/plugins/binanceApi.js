@@ -6,7 +6,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import store from "../store";
 import { mapGetters } from "vuex";
 import axios from "axios";
-import { open } from "fs";
+
 
 export default {
   install(Vue) {
@@ -21,6 +21,8 @@ export default {
       },
       methods: {
         initWs() {
+          console.log("init")
+
           this.apiKeys = store.getters.getApiKeys;
           const key = this.apiKeys["apiKey"];
           const secret = this.apiKeys["apiSecret"];
@@ -39,11 +41,11 @@ export default {
               this.handleOnMessage(data);
             };
           };
+          this.getListenKey();
         },
         startApi() {
           // this.getOpenOrders(store.getters.getAsset.substring(0, 3));
           this.refreshListenKey = true;
-          this.getListenKey();
           this.getPositions();
           this.getOpenOrders();
         },
@@ -54,7 +56,7 @@ export default {
         },
         createSignedQueryString(queryString) {
           const timestamp = Date.now();
-          const recvWindow = 115000
+          const recvWindow = 5000
           const stringToSign = `${queryString}&recvWindow=${recvWindow}&timestamp=${timestamp}`;
           const signature = hmacSHA256(
             stringToSign,
@@ -251,6 +253,25 @@ export default {
           store.commit("setOpenPositions", {
             exchange: "binance",
             result: a,
+          })
+          store.commit("setBotPositions", {
+            exchange: "binance",
+            result: a.map(pos => {
+              return {
+                symbol: pos.symbol,
+                side: pos.side,
+                size: pos.size,
+                entry_price: pos.entry_price,
+                unrealised_pnl_last: pos.unrealised_pnl_last,
+              }
+            })
+          })
+        },
+        handleGetBalance(data){
+          const balances = data.filter(balance => balance.asset === "USDT")
+          store.commit("setBalance", {
+            balance: balances[0].balance,
+            avalaibleBalance: balances[0].availableBalance 
           })
         },
         getTradingStops() {
@@ -475,8 +496,12 @@ export default {
           // refresh listen key every 50 minutes
           setTimeout(() => this.keepAlive(), 50 * 60 * 1000);
         },
-        getPositions() {
-          const queryString = `symbol=${store.getters.getAsset}`;
+        getPositions(symbol = "") {
+          if (symbol === ""){
+            const queryString = `symbol=${store.getters.getAsset}`;
+          } else {
+            const queryString = `symbol=symbol`;
+          }
           axios
             .get(
               `${
@@ -496,6 +521,55 @@ export default {
             .get(`${this.restApiUrl}fapi/v1/exchangeInfo`)
             .then((res) => this.handleGetAssets(res.data))
             .catch((err) => console.error(err));
+        },
+        getWalletBalance(){
+          const queryString = ``;
+          const data = axios
+            .get(
+              `${this.restApiUrl}/fapi/v2/balance?${this.createSignedQueryString(queryString)}`,
+              {
+                headers: { "X-MBX-APIKEY": this.apiKeys["apiKey"] },
+              })
+            .then(res => this.handleGetBalance(res.data))
+            .catch(err => this.handleError(err))
+        },
+        getBBA(symbol){
+          // get best bid and ask
+          const queryString = `symbol=${symbol}`;
+          const data = axios
+            .get(`${this.restApiUrl}/fapi/v1/ticker/bookTicker?${queryString}`)
+            .then(res => {
+              store.commit("setBBA", {
+                  symbol: res.data.symbol.toLowerCase(),
+                  bestBid: res.data.bidPrice,
+                  bestAsk: res.data.askPrice,
+                })
+            })
+            .catch(err => this.handleError(err))
+        },
+        setLeverage(leverage, coin){
+          let queryString = `symbol=${coin}&marginType=ISOLATED`
+          let signedQuery = this.createSignedQueryString(queryString)
+          let url = `${this.restApiUrl}fapi/v1/marginType?${signedQuery}`
+          /* fetch is used instead of axios because of bug in latter */
+          fetch(url, {
+          method: "POST",
+          headers: {"Content-Type": 'application/json;charset=UTF-8',
+                    "Access-Control-Allow-Origin": "*",
+                    "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                  }
+          })
+          queryString = `symbol=${coin}&leverage=${leverage}`
+          signedQuery = this.createSignedQueryString(queryString)
+          url = `${this.restApiUrl}fapi/v1/leverage?${signedQuery}`
+          /* fetch is used instead of axios because of bug in latter */
+          fetch(url, {
+          method: "POST",
+          headers: {"Content-Type": 'application/json;charset=UTF-8',
+                    "Access-Control-Allow-Origin": "*",
+                    "X-MBX-APIKEY": this.apiKeys["apiKey"]
+                  }
+          })
         },
       },
       computed: {

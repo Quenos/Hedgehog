@@ -2,7 +2,7 @@
   <v-app id="inspire">
     <v-navigation-drawer v-model="drawer" app clipped>
       <v-list dense>
-        <v-list-item @click="handleShowLadder">
+        <v-list-item v-if="activate" @click="handleShowLadder">
           <v-list-item-action>
             <v-icon>mdi-stairs</v-icon>
           </v-list-item-action>
@@ -10,7 +10,7 @@
             <v-list-item-title>Ladder</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="handleShowMarket">
+        <v-list-item  v-if="activate" @click="handleShowMarket">
           <v-list-item-action>
             <v-icon>mdi-storefront</v-icon>
           </v-list-item-action>
@@ -18,7 +18,7 @@
             <v-list-item-title>Market Order</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="handleShowLimit">
+        <v-list-item  v-if="activate" @click="handleShowLimit">
           <v-list-item-action>
             <v-icon>mdi-arrow-expand-vertical</v-icon>
           </v-list-item-action>
@@ -26,7 +26,15 @@
             <v-list-item-title>Limit Order</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item link>
+        <v-list-item v-if="botAvailable && activate" @click="handleShowBot">
+          <v-list-item-action>
+            <v-icon>mdi-robot</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>TRDR Bot</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item v-if="activate" link>
           <v-list-item-action>
             <v-icon>mdi-cog</v-icon>
           </v-list-item-action>
@@ -43,13 +51,13 @@
       <v-spacer></v-spacer>
       <v-select
         v-model="activeAccount"
-        :items="accountList"
+        :items="trdrBot ? botAccountList : accountList"
         label="Accounts"
         @change="handleExchangeChange"
       >
       </v-select>
       <v-spacer></v-spacer>
-      <v-select
+      <v-select v-if="!trdrBot"
         v-model="asset"
         :items="assets"
         label="Assets"
@@ -57,7 +65,7 @@
       >
       </v-select>
       <v-spacer></v-spacer>
-      <div>
+      <div v-if="!trdrBot">
         <span v-if="lastPriceUp" class="success--text"
           >Last: <strong>{{ lastAndMarkPrice.lastPrice.toFixed(precision) }}</strong>
         </span>
@@ -84,9 +92,15 @@
     </v-app-bar>
 
     <v-main>
-      <Ladder v-if="ladder && asset" />
+      <Ladder v-if="ladder && asset" activate/>
       <Market v-else-if="market && asset" />
       <Limit v-else-if="limit && asset" />
+      <TRDRBot v-else-if="trdrBot" />
+      <v-row v-else-if="!activate" justify="center">
+        <v-col align="center" sm="12">
+          <h1>License expired</h1>
+        </v-col>
+      </v-row>
       <v-row v-else justify="center">
         <v-col align="center" sm="12">
           <h1>Select account and asset to get started</h1>
@@ -107,11 +121,14 @@
 import Ladder from "./views/Ladder";
 import Market from "./views/Market";
 import Limit from "./views/Limit";
+import TRDRBot from "./views/TRDRBot"
 import APIDialog from "@/components/APIDialog";
 import store from "./store";
+import botStore from "./store"
 
 export default {
   store,
+  botStore,
   props: {
     source: String,
   },
@@ -119,8 +136,26 @@ export default {
     Ladder,
     Market,
     Limit,
+    TRDRBot,
     APIDialog,
   },
+    data: () => ({
+    botAvailable: false,
+    activate: false,
+    ladder: true,
+    market: false,
+    limit: false,
+    trdrBot: false,
+    apiStarted: false,
+    activeAccount: "",
+    botActiveAccount: "",
+    drawer: null,
+    lastPriceUp: false,
+    lastPriceDn: false,
+    markPriceUp: false,
+    markPriceDn: false,
+    divider: `\xa0|\xa0`,
+  }),
   methods: {
     handleShowLadder() {
       if (this.asset !== ""){
@@ -128,6 +163,7 @@ export default {
         this.limit = false
         this.ladder = true
       }
+      this.trdrBot = false
     },
     handleShowMarket() {
       if (this.asset !== ""){
@@ -135,6 +171,13 @@ export default {
         this.limit = false
         this.ladder = false
       }
+      this.trdrBot = false
+    },
+    handleShowBot() {
+        this.market = false
+        this.limit = false
+        this.trdrBot = true
+        this.ladder = false
     },
     handleShowLimit() {
       if (this.asset !== ""){
@@ -142,12 +185,19 @@ export default {
         this.limit = true
         this.ladder = false
       }
+      this.trdrBot = false
     },
     handleExchangeChange() {
+      if (this.trdrBot){
+        this.handleBotExchChange()
+      }
       this.apiStarted = false;
       this.$apiAbstraction.closeApi();
       store.dispatch("changeExchange", this.activeAccount);
       this.$apiAbstraction.initExchange()
+    },
+    handleBotExchChange() {
+      store.dispatch("changeBotExchange", this.activeAccount);
     },
     setAsset(asset) {
       store.dispatch("changeAsset", asset);
@@ -161,19 +211,6 @@ export default {
       this.$apiAbstraction.getOpenOrders(asset)
     },
   },
-  data: () => ({
-    ladder: true,
-    market: false,
-    limit: false,
-    apiStarted: false,
-    activeAccount: "",
-    drawer: null,
-    lastPriceUp: false,
-    lastPriceDn: false,
-    markPriceUp: false,
-    markPriceDn: false,
-    divider: `\xa0|\xa0`,
-  }),
   created() {
     this.$vuetify.theme.dark = true;
     this.$vuetify.theme.themes.dark.primary = "#eba51d";
@@ -183,13 +220,24 @@ export default {
   },
   mounted() {
     store.dispatch("loadApiKeys");
+    const date = new Date()
+    const endDate = new Date('2020-09-25')
+    if (date <= endDate){
+      if(process.env.NODE_ENV === "development"){
+        this.botAvailable = true
+      }
+      this.activate = true
+      this.$binanceOrderBook.initWs()
+      console.log(`${new Date(Date.now()).toLocaleString()} bot started`)
+    }
   },
   computed: {
     precision: () => {
       const tickSize = store.getters.getTickSizeBySymbol(store.getters.getAsset);
       return tickSize.length ? Math.ceil(Math.abs(Math.log10(tickSize[0]["tickSize"]))) : 2
     },
-    accountList: () => store.getters.getAccounts,
+    accountList: () => store.getters.getAccounts(),
+    botAccountList: () => store.getters.getAccounts("binance"),
     assets: () => store.getters.getAssets,
     asset: {
       get: () => store.getters.getAsset,
