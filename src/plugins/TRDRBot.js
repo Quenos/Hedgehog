@@ -14,6 +14,7 @@ export default {
         botStarted: false,
         threshold: 200,
         inTrade: {},
+        trades: [],
       },
       methods: {
         delay(period){
@@ -57,6 +58,7 @@ export default {
                 }
               } else {
                 this.askCounts[key] > 0 ? this.askCounts[key]-- : true
+
               }
             }
           })
@@ -69,6 +71,7 @@ export default {
             return
           }
           this.inTrade[pair] = true
+          setTimeout(() => this.inTrade[pair] = false, 60000 * 15)
           const risk = botStore.getters.getRisk
           this.$apiAbstraction.setLeverage(risk.leverage, pair)
           this.$apiAbstraction.getWalletBalance()
@@ -83,9 +86,10 @@ export default {
           const tickSize = store.getters.getTickSizeBySymbol(pair.toUpperCase())[0]
           const lastPrice = botStore.getters.getLastPriceFuture(pair)
           const positionSize = parseFloat(balance) * risk.risk * risk.leverage / parseFloat(lastPrice)
-          const quantity = positionSize - positionSize % tickSize.minStepSize  // round down to decimal precision of pair
-          const tpsl = botStore.getters.getTakeProfitStoploss
+          let quantity = positionSize - positionSize % tickSize.minStepSize  // round down to decimal precision of pair
           // following code is to adhere to the ticksize and get rid of rounding errors like 0.00000000001
+          quantity = parseFloat(quantity.toFixed(8))
+          const tpsl = botStore.getters.getTakeProfitStoploss
           let stop_loss = direction === "long" ? lastPrice - lastPrice * tpsl.sl : lastPrice + lastPrice * tpsl.sl
           stop_loss = parseFloat((Math.floor(stop_loss / tickSize.tickSize)*tickSize.tickSize).toFixed(8))
           let tp1 = direction === "long" ? lastPrice + lastPrice * tpsl.tp1 : lastPrice - lastPrice * tpsl.tp1

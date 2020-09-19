@@ -46,7 +46,7 @@ export default {
         startApi() {
           // this.getOpenOrders(store.getters.getAsset.substring(0, 3));
           this.refreshListenKey = true;
-          this.getPositions();
+          this.getPositions(store.getters.getAsset);
           this.getOpenOrders();
         },
         closeApi() {
@@ -85,7 +85,7 @@ export default {
                   lastPrice: parseFloat(item.c),
                 });
                 if (item.s === store.getters.getAsset){
-                  this.getPositions()
+                  this.getPositions(item.s)
                 }
               });
             } catch {
@@ -141,7 +141,7 @@ export default {
             return;
           }
           // since the user data stream doesn't contain all the info needed we make a call to getPositions
-          this.getPositions();
+          this.getPositions(store.getters.getAsset);
         },
         handleOpenOrders(data) {
           store.commit("setOpenOrders", {
@@ -496,12 +496,9 @@ export default {
           // refresh listen key every 50 minutes
           setTimeout(() => this.keepAlive(), 50 * 60 * 1000);
         },
-        getPositions(symbol = "") {
-          if (symbol === ""){
-            const queryString = `symbol=${store.getters.getAsset}`;
-          } else {
-            const queryString = `symbol=symbol`;
-          }
+        getPositions(symbol) {
+          const queryString = `symbol=${symbol}`;
+          console.log(queryString)          
           axios
             .get(
               `${
