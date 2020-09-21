@@ -37,7 +37,7 @@ export default {
         stopBot(){
           this.botStarted = false
         },
-        checkSignals(){
+        async checkSignals(){
           const coinsToTrade = botStore.getters.getCoinsToTrade
           Object.keys(coinsToTrade).forEach( key => {
             if (coinsToTrade[key]){
@@ -97,17 +97,69 @@ export default {
           let tp2 = direction === "long" ? lastPrice + lastPrice * tpsl.tp2 : lastPrice - lastPrice * tpsl.tp2
           tp2 = parseFloat((Math.floor(tp2 / tickSize.tickSize) * tickSize.tickSize).toFixed(8))
           const side = direction === "long" ? "buy" : "sell"
-          let order = []
-          order.push({
+          let order = {}
+          order = {
+            pair,
             side,
             quantity,
             price: entryPrice,
             stop_loss,
-          })
+            tp1,
+            tp2,
+            tickSize,
+            balance,
+            pnl: 0,
+            state: "INITIATED",
+          }
+          this.trades.push(order)
           botStore.commit("addLogEntry", `Initiating trade: ${pair}, side: ${direction}, size: ${quantity}, entry: ${entryPrice}, tp1: ${tp1}, tp2: ${tp2}, sl: ${stop_loss}`)
         },
         monitorTrades(){
-
+          this.trades.forEach(trade => {
+            const position = store.getters.getBotPositionBySymbol(trade.pair.toUpperCase())
+            const openOrders = store.getters.getOpenOrdersByExchangeInstrument("binance", trade.pair)
+            switch(trade.state){
+              case "INITIATED":
+                this.$apiAbstraction.enterOrders(trade.pair, "LIMIT", false, false, [trade])
+                trade.state = "ENTERED"
+                break
+              case "ENTERED":
+                if (position){
+                  botStore.commit("addLogEntry", `Trade entered: ${position.symbol}, side: ${position.side}, size: ${position.size}, entry: ${position.entryPrice}`)
+                  let quantity = trade.quantity / 2 - (trade.quantity / 2) % trade.tickSize.minStepSize  // round down to decimal precision of pair
+                  quantity = parseFloat(quantity.toFixed(8))
+                  const rest = position.size - 2 * quantity
+                  this.$apiAbstraction.takeProfitOrder(trade.pair, trade.side, trade.tp1, quantity)
+                  this.$apiAbstraction.takeProfitOrder(trade.pair, trade.side, trade.tp2, quantity + rest)
+                  trade.state = "EXECUTED"
+                }
+                break
+              case "EXECUTED":
+                if (!openOrders.filter(order => order.orderType.toUpperCase() == "STOP").length){ // stop not in open orders => so hit
+                  openOrders.forEach(order => this.$apiAbstraction.cancelOrder(order.order_id))
+                  if (trade.pnl === 0){
+                    trade.pnl = Math.abs(trade.entry - trade.sl) * trade.quantity * -1
+                  }
+                  botStore.commit("addLogEntry", `Stop hit: ${trade.pair}, side: ${trade.side}, size: ${trade.size}, stop loss: ${trade.stop_loss}`)                    
+                  trade.state = "EXITED"
+                } else if (openOrders.length === 2){ // 2 orders in open orders stop already handled => so TP1 hit
+                  openOrders.forEach(order => this.$apiAbstraction.cancelOrder(order.order_id))
+                  this.$apiAbstraction.stoplossOrder(trade.pair, trade.side, trade.price, trade.quantity)
+                  trade.pnl = Math.abs(trade.entry - trade.tp1) * trade.quantity / 2 
+                  botStore.commit("addLogEntry", `TP1 hit: ${trade.pair}, side: ${trade.side}, size: ${trade.size}, take profit 1: ${trade.tp1}`)                    
+                } else if (openOrders.length === 1){ // 1 order in open orders => stop already handled so tp2 hit
+                  openOrders.forEach(order => this.$apiAbstraction.cancelOrder(order.order_id))
+                  trade.pnl += Math.abs(trade.entry - trade.tp2) * trade.quantity / 2 
+                  botStore.commit("addLogEntry", `TP2 hit: ${trade.pair}, side: ${trade.side}, size: ${trade.size}, take profit 2: ${trade.tp2}`)                    
+                  trade.state = "EXITED"
+                } 
+                break
+              case "EXITED":
+                botStore.commit("addLogEntry", `Trade closed: ${trade.pair}, side: ${trade.side}, size: ${trade.size}, absolute pnl: ${trade.pnl}USDT percentage PNL: ${trade.pnl/trade.balance*100}%`)                    
+                trade.state = "CLOSED"
+                break
+            }
+          })
         },
       },
       computed: {

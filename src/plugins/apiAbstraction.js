@@ -176,8 +176,13 @@ export default {
         },
 
         async getOpenOrders(asset) {
-          if (store.getters.getExchange === "deribit") {
-            this.$deribitApi.getOpenOrders(asset.substring(0, 3));
+          switch(store.getters.getExchange){
+            case "deribit":
+              this.$deribitApi.getOpenOrders(asset.substring(0, 3));
+              break;
+            case "binance":
+              this.$binanceApi.getOpenOrders(asset)
+              break;
           }
         },
 
