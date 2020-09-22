@@ -157,7 +157,6 @@ const getters = {
   getActiveAccount: (state) => state.account,
   getBalance: (state) => state.balances[state.exchange],
   getBBA: (state) => {
-    console.log(state.bba)
     return state.bba[state.exchange]
   },
 };

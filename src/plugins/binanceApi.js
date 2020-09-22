@@ -141,7 +141,9 @@ export default {
             return;
           }
           // since the user data stream doesn't contain all the info needed we make a call to getPositions
-          this.getPositions(store.getters.getAsset);
+          console.log(`handleUds:`)
+          console.log(data)
+          data.a.P.forEach(position => this.getPositions(position.s))
         },
         handleOpenOrders(data) {
           store.commit("setOpenOrders", {
